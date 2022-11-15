@@ -1,21 +1,15 @@
 const AWS = require("aws-sdk");
-AWS.config.update({ region: process.env.AWS_REGION })
+AWS.config.update({ region: process.env.AWS_REGION });
 
 const dynamo = new AWS.DynamoDB.DocumentClient();
-const s3 = new AWS.S3()
-const ssm = new AWS.SSM()
-
-const PATH = "/argenpills/dev/admin-password"; //TODO use the enviroment
-const TOKENPATH = "/argenpills/dev/auth-token";
-
-const USERNAME = "Administrator";
+const s3 = new AWS.S3();
 
 const UPL_IMAGE = 1;
 const UPL_TEST = 2;
 
 exports.handler = async (event, context) => {
 	let body;
-	let statusCode = 200
+	let statusCode = 200;
 	let totalItems = 0; //will store the x-total-count for the /items
 	let addMode = true;
 
@@ -28,40 +22,11 @@ exports.handler = async (event, context) => {
 		"x-total-count": totalItems
 	};
 
-	const PASSWORD = await ssm.getParameter(
-		{ Name: PATH, WithDecryption: true }).promise();
-
-	const TOKEN = await ssm.getParameter(
-		{ Name: TOKENPATH, WithDecryption: true }).promise();
-
-	const AUTHORIZATION = "Bearer " + TOKEN.Parameter.Value;
-
 	//This is the URL where the images are hosted. In this case is a CF distribution
 	const CDN_IMAGES = process.env.CDN_IMAGES;
 
 	try {
 		switch (event.routeKey) {
-			//POOR'S MAN AUTH//////////////////////////////////////////////////////
-			case "POST /authenticate":
-				const params = JSON.parse(event.body);
-
-				//Get the password from the parameter store
-				const clearPass = PASSWORD.Parameter.Value;
-
-				if (params.username != "" && params.password != "") {
-					//we have user and password
-					if (params.username == USERNAME && params.password == clearPass)
-						body = { token: TOKEN.Parameter.Value }; //OK
-					else {
-						statusCode = 403;
-						body = { status: "Invalid user/password" };
-					}
-				} else {
-					statusCode = 401;
-					body = { status: "Missing parameters" };
-				}
-
-				break;
 			////////////////////////////////////////////////////
 			case "POST /upload":
 				const uploadImage = event.body;
@@ -82,22 +47,17 @@ exports.handler = async (event, context) => {
 			////////////////////////////////////////////////////
 			case "DELETE /items/{id}":
 
-				if (event.headers["authorization"] != AUTHORIZATION) {
-					statusCode = 401;
-					body = "Unauthorized";
-				}
-				else {
-					//TODO Delete the images from S3?
-					await dynamo
-						.delete({
-							TableName: "argenpills",
-							Key: {
-								id: event.pathParameters.id
-							}
-						})
-						.promise();
-					body = `Deleted item ${event.pathParameters.id}`;
-				}
+				//TODO Delete the images from S3?
+				await dynamo
+					.delete({
+						TableName: "argenpills",
+						Key: {
+							id: event.pathParameters.id
+						}
+					})
+					.promise();
+				body = `Deleted item ${event.pathParameters.id}`;
+
 				break;
 
 			//////////////////////////////////////////////////////
@@ -180,7 +140,7 @@ exports.handler = async (event, context) => {
 					const search = queryParams.s;
 
 					if (search == null) {
-						statusCode = 403
+						statusCode = 403;
 						body = "Missing parameter";
 					}
 					else {
@@ -232,70 +192,66 @@ exports.handler = async (event, context) => {
 			case "PUT /items/{id}":
 				addMode = false;
 			case "POST /items":
-				if (event.headers["authorization"] != AUTHORIZATION) {
-					statusCode = 401;
-					body = "Unauthorized";
-				}
-				else {
-					var id;
-					console.log("Parameters: ", event.pathParameters);
+				var id;
+				console.log("Parameters: ", event.pathParameters);
 
-					if (addMode && event.pathParameters == null)
-						id = AWS.util.uuid.v4();   //generate guid
-					else
-						id = event.pathParameters.id;
+				if (addMode && event.pathParameters == null)
+					id = AWS.util.uuid.v4();   //generate guid
+				else
+					id = event.pathParameters.id;
 
-					let requestJSON = JSON.parse(event.body);
+				let requestJSON = JSON.parse(event.body);
 
-					//console.log("Parsed JSON", requestJSON);
+				//console.log("Parsed JSON", requestJSON);
 
-					const uploadedImageKey = await ProcessUploads(event, requestJSON.upl_image, UPL_IMAGE);
-					const uploadedLabKey = await ProcessUploads(event, requestJSON.upl_lab, UPL_TEST);
+				const uploadedImageKey = await ProcessUploads(event, requestJSON.upl_image, UPL_IMAGE);
+				const uploadedLabKey = await ProcessUploads(event, requestJSON.upl_lab, UPL_TEST);
 
-					if (uploadedImageKey != null)
-						requestJSON.image = "/" + uploadedImageKey;
+				if (uploadedImageKey != null)
+					requestJSON.image = "/" + uploadedImageKey;
 
-					if (uploadedLabKey != null)
-						requestJSON.lab_image = "/" + uploadedLabKey;
+				if (uploadedLabKey != null)
+					requestJSON.lab_image = "/" + uploadedLabKey;
 
 
-					await dynamo
-						.put({
-							TableName: "argenpills",
-							Item: {
-								id: id,
-								name: requestJSON.name,
-								color: requestJSON.color,
-								posted_date: requestJSON.posted_date,
-								image: requestJSON.image,
-								load: requestJSON.load,
-								substance: requestJSON.substance,
-								warning: requestJSON.warning,
-								notes: requestJSON.notes,
-								ap_url: requestJSON.ap_url,
-								lab_url: requestJSON.lab_url,
-								lab_image: requestJSON.lab_image,
-								search_value: requestJSON.name.toLowerCase() + " " + requestJSON.color.toLowerCase(),
-								published: 'x',
-								multiple_batchs: requestJSON.multiple_batchs
-							}
-						})
-						.promise();
+				await dynamo
+					.put({
+						TableName: "argenpills",
+						Item: {
+							id: id,
+							name: requestJSON.name,
+							color: requestJSON.color,
+							posted_date: requestJSON.posted_date,
+							image: requestJSON.image,
+							load: requestJSON.load,
+							substance: requestJSON.substance,
+							warning: requestJSON.warning,
+							notes: requestJSON.notes,
+							ap_url: requestJSON.ap_url,
+							lab_url: requestJSON.lab_url,
+							lab_image: requestJSON.lab_image,
+							search_value: requestJSON.name.toLowerCase() + " " + requestJSON.color.toLowerCase(),
+							published: 'x',
+							multiple_batchs: requestJSON.multiple_batchs
+						}
+					})
+					.promise();
 
-					console.log(`Item ${id} added or updated`);
+				console.log(`Item ${id} added or updated`);
 
-					body = await dynamo
-						.get({
-							TableName: "argenpills",
-							Key: {
-								id: id
-							}
-						})
-						.promise();
+				body = await dynamo
+					.get({
+						TableName: "argenpills",
+						Key: {
+							id: id
+						}
+					})
+					.promise();
 
-					body = body.Item;
-				}
+				body = body.Item;
+
 				break;
+
 			default:
 				throw new Error(`Unsupported route: "${event.routeKey}"`);
 		}
