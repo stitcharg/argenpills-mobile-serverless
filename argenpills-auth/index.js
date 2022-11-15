@@ -8,8 +8,6 @@ const POOL_ID = process.env.POOL_ID;
 
 exports.handler = async (event, context) => {
 
-	console.log("Region", process.env.AWS_REGION);
-
 	const bodyParams = JSON.parse(event.body);
 
 	const username = bodyParams.username;
