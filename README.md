@@ -9,13 +9,13 @@ Hay dos variables de entorno:
 | `CDN_IMAGES` | Dominio de donde se leen las images. CF Distribution escuchando en el bucket       |
 | `S3_BUCKET` | S3 Bucket donde se guardan las imagenes |
 
-## AWS Secrets
-Se necesitan dos secrets en AWS:
+## Cognito
+Se usa Cognito, para eso se usa el lambda de auth, la cual tiene 2 variables de environment
 
 | Nombre | Descripcion |
 | ----------- | ----------- |
-| `/argenpills/dev/admin-password` | Password del admin |
-| `/argenpills/dev/auth-token` | Token valido |
+| `CLIENT_ID` | ClientID del pool de Cognito |
+| `POOL_ID` | Cognito Pool Id |
 
 ## S3 Buckets
 Se necesita un bucket de S3 para guardar las imagenes. Ahi se guardan las fotos y los tests.
