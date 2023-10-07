@@ -1,13 +1,10 @@
 const AWS = require("aws-sdk");
 AWS.config.update({ region: process.env.AWS_REGION });
 
-const dynamo = new AWS.DynamoDB.DocumentClient();
-const s3 = new AWS.S3();
-
 const UPL_IMAGE = 1;
 const UPL_TEST = 2;
 
-exports.handler = async (event, context) => {
+const handlerWithDependencies = async (event, context, dynamo, s3) => {
 	let body;
 	let statusCode = 200;
 	let totalItems = 0; //will store the x-total-count for the /items
@@ -327,3 +324,12 @@ const UploadImage = async function (event, imageToUpload, prefix) {
 		return { Status: "ERROR" };
 	}
 };
+
+
+exports.handler = async (event, context) => {
+	const dynamoDB = new AWS.DynamoDB.DocumentClient();
+	const s3 = new AWS.S3();
+	return handlerWithDependencies(event, context, dynamoDB, s3);
+};
+
+exports.handlerWithDependencies = handlerWithDependencies;
