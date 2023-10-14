@@ -1,4 +1,5 @@
 const { DynamoDBClient, QueryCommand } = require("@aws-sdk/client-dynamodb");
+const { marshall, unmarshall } = require('@aws-sdk/util-dynamodb');
 
 exports.Testeablehandler = async (event, context, client) => {
 	let body;
@@ -14,9 +15,12 @@ exports.Testeablehandler = async (event, context, client) => {
 	const command = new QueryCommand({
 		TableName: AP_TABLE,
 		IndexName: "published-posted_date-index",
-		KeyConditionExpression: "published = :published",
+		KeyConditionExpression: "#published = :published",
+		ExpressionAttributeNames: {
+			'#published': 'published' 
+		},	
 		ExpressionAttributeValues: {
-			":published": 'x'
+			":published": { S: 'x' }
 		},
 		ScanIndexForward: false
 	});
@@ -24,14 +28,20 @@ exports.Testeablehandler = async (event, context, client) => {
 	//This is the URL where the images are hosted. In this case is a CF distribution
 	const CDN_IMAGES = process.env.CDN_IMAGES;
 
-	try {
-		const results = await client.send(command);
+	try {		
+		const { Items, Count } = await client.send(command);
+
+		console.log(Items);
+
+		const results = Items.map(unmarshall);
+
+		console.log(results);
 
 		//set the total items
-		headers["X-Total-Count"] = results.Count;
+		headers["X-Total-Count"] = Count;
 
 		//Prefix the items URL with the CDN, just to make it simpler to display
-		body = results.Items.map(row => {
+		body = results.map(row => {
 			if (row.image)
 				row.image = CDN_IMAGES + row.image;
 
@@ -47,13 +57,13 @@ exports.Testeablehandler = async (event, context, client) => {
 		};
 
 	} catch (err) {
-		console.error(err);
+		console.log("ERROR", err);
 		throw new Error('Unable to query data');
 	}
 };
 
 exports.handler = async (event, context) => {
 	const client = new DynamoDBClient({ region: process.env.AWS_REGION });
-	return Testeablehandler(event, context, client);
+	return exports.Testeablehandler(event, context, client);
 };
 

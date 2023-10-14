@@ -1,0 +1,3 @@
+name: argenpills-crud-infrastructure
+runtime: nodejs
+description: Infra del CRUD de AP
