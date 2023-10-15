@@ -1,61 +1,222 @@
 const mockGetItemsResponse = {
+	"$metadata": {
+	   "httpStatusCode": 200,
+	   "requestId": "F8L2107FA8BTQM1LBR3PTG2VDNVV4KQNSO5AEMVJF66Q9ASUAAJG",
+	   "attempts": 1,
+	   "totalRetryDelay": 0
+	},
 	"Count": 2,
 	"Items": [
-		{
-			"published": "x",
-			"ap_url": "https://argenpills.org/showthread.php?tid=7290",
-			"image": "/pills/6406701.jpg",
-			"search_value": "monster verde",
-			"notes": "Parecen tener buen laqueado. No sabemos si tienen linea divisoria, o tienen algún mensaje en la parte de atrás.",
-			"id": "206374e8-2a14-4d9a-a9c0-70293aa6e7db",
-			"posted_date": "2023-09-05",
-			"name": "Monster",
-			"color": "Verde"
-		},
-		{
-			"published": "x",
-			"ap_url": "https://argenpills.org/showthread.php?tid=111",
-			"image": "/pills/0.jpg",
-			"search_value": "pepe amarillo",
-			"notes": "Nota de ejemplo",
-			"id": "206374e8-2a14-4d8a-a9c0-70293aa6e7db",
-			"posted_date": "2023-01-01",
-			"name": "Pepe",
-			"color": "amarillo"
-		}
-	]
-}
+	   {
+		  "published": {
+			 "S": "x"
+		  },
+		  "ap_url": {
+			 "S": "https://argenpills.org/showthread.php?tid=1111"
+		  },
+		  "search_value": {
+			 "S": "red bull verde"
+		  },
+		  "lab_url": {
+			 "S": ""
+		  },
+		  "load": {
+			 "N": "1"
+		  },
+		  "posted_date": {
+			 "S": "2023-02-02"
+		  },
+		  "name": {
+			 "S": "Pepe"
+		  },
+		  "substance": {
+			 "N": "1"
+		  },
+		  "image": {
+			 "S": "/pills/818730.jpg"
+		  },
+		  "notes": {
+			 "S": "Linea divisoria"
+		  },
+		  "multiple_batchs": {
+			 "BOOL": false
+		  },
+		  "lab_image": {
+			 "S": "/pills/818730.jpg"
+		  },
+		  "id": {
+			 "S": "787f23d3-7f90-4394-8ea8-af32e1ad3e6a"
+		  },
+		  "warning": {
+			 "N": "1"
+		  },
+		  "color": {
+			 "S": "Verde"
+		  }
+	   },
+	   {
+		  "published": {
+			 "S": "x"
+		  },
+		  "ap_url": {
+			 "S": "https://argenpills.org/showthread.php?tid=2222"
+		  },
+		  "search_value": {
+			 "S": "red bull azul"
+		  },
+		  "lab_url": {
+			 "S": ""
+		  },
+		  "load": {
+			 "N": "1"
+		  },
+		  "posted_date": {
+			 "S": "2023-02-02"
+		  },
+		  "name": {
+			 "S": "Red Bull"
+		  },
+		  "substance": {
+			 "N": "1"
+		  },
+		  "image": {
+			 "S": "/pills/818730.jpg"
+		  },
+		  "notes": {
+			 "S": "Linea divisoria"
+		  },
+		  "multiple_batchs": {
+			 "BOOL": false
+		  },
+		  "lab_image": {
+			 "S": "/pills/818730.jpg"
+		  },
+		  "id": {
+			 "S": "787f23d3-7f90-4394-8ea8-af32e1ad3e6a"
+		  },
+		  "warning": {
+			 "N": "1"
+		  },
+		  "color": {
+			 "S": "Azul"
+		  }
+	   }      
+	],
+	"ScannedCount": 1
+ }
 
 const mockSingleItemResponse = {
-	"Item":
-	{
-		"published": "x",
-		"ap_url": "https://argenpills.org/showthread.php?tid=111",
-		"image": "/pills/0.jpg",
-		"search_value": "pepe amarillo",
-		"notes": "Nota de ejemplo",
-		"id": "206374e8-2a14-4d8a-a9c0-70293aa6e7db",
-		"posted_date": "2023-01-01",
-		"name": "Pepe",
-		"color": "amarillo"
+	"$metadata": {
+	   "httpStatusCode": 200,
+	   "requestId": "RB4P3VCKKMC3NSQ6MTUJAGLJ5JVV4KQNSO5AEMVJF66Q9ASUAAJG",
+	   "attempts": 1,
+	   "totalRetryDelay": 0
+	},
+	"Item": {
+	   "published": {
+		  "S": "x"
+	   },
+	   "ap_url": {
+		  "S": "https://argenpills.org/showthread.php?tid=6832"
+	   },
+	   "search_value": {
+		  "S": "Pepe roja"
+	   },
+	   "lab_url": {
+		  "S": ""
+	   },
+	   "load": {
+		  "N": "1"
+	   },
+	   "posted_date": {
+		  "S": "2023-02-02"
+	   },
+	   "name": {
+		  "S": "Pepe"
+	   },
+	   "substance": {
+		  "N": "1"
+	   },
+	   "image": {
+		  "S": "/pills/818730.jpg"
+	   },
+	   "notes": {
+		  "S": "Linea divisoria"
+	   },
+	   "multiple_batchs": {
+		  "BOOL": false
+	   },
+	   "lab_image": {
+		  "S": "/pills/818730.jpg"
+	   },
+	   "id": {
+		  "S": "787f23d3-7f90-4394-8ea8-af32e1ad3e6a"
+	   },
+	   "warning": {
+		  "N": "1"
+	   },
+	   "color": {
+		  "S": "Roja"
+	   }
 	}
-
-}
+ }
 
 const mockSearchResults = {
+	"$metadata": {
+	   "httpStatusCode": 200,
+	   "requestId": "F8L2107FA8BTQM1LBR3PTG2VDNVV4KQNSO5AEMVJF66Q9ASUAAJG",
+	   "attempts": 1,
+	   "totalRetryDelay": 0
+	},
 	"Count": 1,
 	"Items": [
-		{
-			"published": "x",
-			"ap_url": "https://argenpills.org/showthread.php?tid=111",
-			"image": "/pills/0.jpg",
-			"search_value": "pepe amarillo",
-			"notes": "Nota de ejemplo",
-			"id": "206374e8-2a14-4d8a-a9c0-70293aa6e7db",
-			"posted_date": "2023-01-01",
-			"name": "Pepe",
-			"color": "amarillo"
-		}
+	   {
+		  "published": {
+			 "S": "x"
+		  },
+		  "ap_url": {
+			 "S": "https://argenpills.org/showthread.php?tid=1111"
+		  },
+		  "search_value": {
+			 "S": "red bull amarillo"
+		  },
+		  "lab_url": {
+			 "S": ""
+		  },
+		  "load": {
+			 "N": "1"
+		  },
+		  "posted_date": {
+			 "S": "2023-02-02"
+		  },
+		  "name": {
+			 "S": "Red Bull"
+		  },
+		  "substance": {
+			 "N": "1"
+		  },
+		  "image": {
+			 "S": "/pills/818730.jpg"
+		  },
+		  "notes": {
+			 "S": "Linea divisoria"
+		  },
+		  "multiple_batchs": {
+			 "BOOL": false
+		  },
+		  "lab_image": {
+			 "S": "/pills/818730.jpg"
+		  },
+		  "id": {
+			 "S": "787f23d3-7f90-4394-8ea8-af32e1ad3e6a"
+		  },
+		  "warning": {
+			 "N": "1"
+		  },
+		  "color": {
+			 "S": "amarillo"
+		  }
+	   }
 	]
 }
 

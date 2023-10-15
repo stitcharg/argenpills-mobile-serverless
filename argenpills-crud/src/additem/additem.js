@@ -1,4 +1,4 @@
-const { updateItem } = require("./lib/module.items")
+const { updateItem } = require("../lib/module.items")
 const { randomUUID } = require('crypto');
 
 exports.Testeablehandler = async (event, context, dynamoDBClient, s3Client) => {

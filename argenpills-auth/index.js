@@ -35,7 +35,8 @@ exports.handler = async (event, context) => {
 		response.body = JSON.stringify({
 			token: cognitoResponse.AuthenticationResult.IdToken
 		});
-	} catch {
+	} catch (err) {
+		console.log("ERROR", err);
 		response.statusCode = 401;
 		response.body = "Invalid username / password";
 	}

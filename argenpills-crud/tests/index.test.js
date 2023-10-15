@@ -1,8 +1,9 @@
-const { Testeablehandler: GetItemsHandler } = require('../src/getitems');
-const { Testeablehandler: GetItemHandler } = require('../src/getitem');
-const { Testeablehandler: SearchItemsHandler } = require('../src/search');
-const { Testeablehandler: AddItemHandler } = require('../src/additem');
-const { Testeablehandler: EditItemHandler } = require('../src/edititem');
+const { Testeablehandler: GetItemsHandler } = require('../src/getitems/getitems');
+const { Testeablehandler: GetItemHandler } = require('../src/getitem/getitem');
+const { Testeablehandler: SearchItemsHandler } = require('../src/search/search');
+const { Testeablehandler: AddItemHandler } = require('../src/additem/additem');
+const { Testeablehandler: EditItemHandler } = require('../src/edititem/edititem');
+const { Testeablehandler: DeleteItemHandler } = require('../src/deleteitem/deleteitem');
 
 const { DynamoDBClient, PutItemCommand, GetItemCommand } = require("@aws-sdk/client-dynamodb");
 const { S3Client } = require("@aws-sdk/client-s3");
@@ -29,12 +30,24 @@ describe('Argenpills CRUD', () => {
 		expect(result.headers["X-Total-Count"]).toBe(2);
 	});
 
+	it('should fail retrieve one item (no id)', async () => {
+		const event = {
+			routeKey: "GET /item",
+		};
+
+		DynamoDBClient.prototype.send = jest.fn().mockResolvedValue(mockSingleItemResponse);
+
+		const result = await GetItemHandler(event, null, mockedDynamoDb);
+
+		expect(result.statusCode).toBe(500);
+	});
+
 	it('should retrieve one item successfully', async () => {
 
 		const event = {
 			routeKey: "GET /item",
 			pathParameters: {
-				id: "206374e8-2a14-4d9a-a9c0-70293aa6e7db"
+				id: "787f23d3-7f90-4394-8ea8-af32e1ad3e6a"
 			}
 		};
 
@@ -42,7 +55,9 @@ describe('Argenpills CRUD', () => {
 
 		const result = await GetItemHandler(event, null, mockedDynamoDb);
 
-		expect(result.name).toBe("Pepe");
+		const body = JSON.parse(result.body);
+
+		expect(body.name).toBe("Pepe");
 	});
 
 
@@ -167,6 +182,25 @@ describe('Argenpills CRUD', () => {
 
 		expect(resultObject.id).toBe(ID);
 	});
+
+	it('should delete the item', async () => {
+
+		const event = {
+			routeKey: "GET /item",
+			pathParameters: {
+				id: "787f23d3-7f90-4394-8ea8-af32e1ad3e6a"
+			}
+		};
+
+		DynamoDBClient.prototype.send = jest.fn().mockResolvedValue(mockSingleItemResponse);
+
+		const result = await DeleteItemHandler(event, null, mockedDynamoDb);
+
+		const body = JSON.parse(result.body);
+
+		expect(result.statusCode).toBe(200);
+	});
+
 });
 
 

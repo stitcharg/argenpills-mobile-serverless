@@ -1,6 +1,8 @@
 {
-	"dependencies": {
-		"@aws-sdk/client-dynamodb": "^3.418.0",
-		"aws-sdk": "^2.1462.0"
-	}
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.428.0",
+    "@aws-sdk/util-dynamodb": "^3.428.0",
+    "aws-sdk": "^2.1473.0",
+    "dotenv": "^16.3.1"
+  }
 }

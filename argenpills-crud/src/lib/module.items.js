@@ -11,7 +11,7 @@ exports.updateItem = async (id, body, DynamoDBClient, s3Client) => {
 		"Content-Type": "application/json"
 	};
 
-	console.log(body);
+	//console.log(body);
 	let requestJSON = JSON.parse(body);
 	const AP_TABLE = process.env.AP_TABLE;
 
@@ -63,8 +63,6 @@ exports.updateItem = async (id, body, DynamoDBClient, s3Client) => {
 		statusCode = 400;
 		body = err.message;
 	} finally {
-		console.log("BODY", body);
-
 		body = JSON.stringify(body);
 	}
 
