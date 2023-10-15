@@ -1,4 +1,5 @@
 const { DynamoDBClient, GetItemCommand } = require("@aws-sdk/client-dynamodb");
+const { marshall, unmarshall } = require('@aws-sdk/util-dynamodb');
 
 exports.Testeablehandler = async (event, context, client) => {
 	let body;
@@ -7,12 +8,19 @@ exports.Testeablehandler = async (event, context, client) => {
 		"Content-Type": "application/json"
 	};
 
+	if (event == null || event.pathParameters?.id == null) {
+		return { 
+			statusCode: 500,
+			body: "Mising ID Parameter"
+		}
+	}
+
 	const AP_TABLE = process.env.AP_TABLE;
 
 	const command = new GetItemCommand({
 		TableName: AP_TABLE,
 		Key: {
-			id: event.pathParameters.id
+			id: {S: event.pathParameters.id }
 		}
 	});
 
@@ -24,7 +32,7 @@ exports.Testeablehandler = async (event, context, client) => {
 		const results = await client.send(command);
 		body = results;
 
-		var pill = body.Item;
+		var pill = unmarshall(body.Item);
 
 		if (pill) {
 			if (pill.image)
@@ -36,7 +44,10 @@ exports.Testeablehandler = async (event, context, client) => {
 
 		body = pill;
 
-		return body;
+		return {
+			statusCode: 200,
+			body: JSON.stringify(body)
+		};
 
 	} catch (err) {
 		console.error(err);
@@ -46,6 +57,6 @@ exports.Testeablehandler = async (event, context, client) => {
 
 exports.handler = async (event, context) => {
 	const client = new DynamoDBClient({ region: process.env.AWS_REGION });
-	return Testeablehandler(event, context, client);
+	return exports.Testeablehandler(event, context, client);
 };
 
