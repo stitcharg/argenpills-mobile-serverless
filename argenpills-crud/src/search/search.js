@@ -1,4 +1,5 @@
 const { DynamoDBClient, QueryCommand, ScanCommand } = require("@aws-sdk/client-dynamodb");
+const { marshall, unmarshall } = require('@aws-sdk/util-dynamodb');
 
 exports.Testeablehandler = async (event, context, client) => {
 	let body;
@@ -35,8 +36,8 @@ exports.Testeablehandler = async (event, context, client) => {
 				IndexName: "published-posted_date-index",
 				FilterExpression: "contains(search_value, :c) and published = :published",
 				ExpressionAttributeValues: {
-					":published": 'x',
-					":c": search.toLowerCase()
+					":published": { S: 'x' },
+					":c": { S: search.toLowerCase() }
 				}
 			})
 			body = await client.send(command);
@@ -44,8 +45,10 @@ exports.Testeablehandler = async (event, context, client) => {
 			//set the total items
 			headers["X-Total-Count"] = body.Count;
 
+			body = body.Items.map(item => unmarshall(item));
+
 			//Prefix the items URL with the CDN, just to make it simpler to display
-			body = body.Items.map(row => {
+			body = body.map(row => {
 				if (row.image)
 					row.image = CDN_IMAGES + row.image;
 
@@ -55,7 +58,11 @@ exports.Testeablehandler = async (event, context, client) => {
 				return row;
 			});
 
-			body = JSON.stringify(body);
+			return {
+				headers,
+				statusCode: 200,
+				body: JSON.stringify(body)
+			};
 		}
 	}
 
@@ -68,7 +75,7 @@ exports.Testeablehandler = async (event, context, client) => {
 
 exports.handler = async (event, context) => {
 	const client = new DynamoDBClient({ region: process.env.AWS_REGION });
-	return Testeablehandler(event, context, client);
+	return exports.Testeablehandler(event, context, client);
 };
 
 

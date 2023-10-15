@@ -31,11 +31,7 @@ exports.Testeablehandler = async (event, context, client) => {
 	try {		
 		const { Items, Count } = await client.send(command);
 
-		console.log(Items);
-
 		const results = Items.map(unmarshall);
-
-		console.log(results);
 
 		//set the total items
 		headers["X-Total-Count"] = Count;
