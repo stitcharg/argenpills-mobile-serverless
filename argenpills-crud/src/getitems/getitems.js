@@ -49,6 +49,7 @@ exports.Testeablehandler = async (event, context, client) => {
 
 		return {
 			headers,
+			statusCode: 200,
 			body: JSON.stringify(body)
 		};
 

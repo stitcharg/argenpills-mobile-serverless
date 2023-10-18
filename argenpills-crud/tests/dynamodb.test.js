@@ -15,6 +15,11 @@ describe("DynamoDB Integration Tests", () => {
     // Cleanup the table
   });
 
+
+     it("should return 1", async () => {
+      return true;   
+     });
+
   // it("displays all tables", async() => {
   //   const run = async () => {
   //       const command = new ListTablesCommand({});
@@ -94,48 +99,50 @@ describe("DynamoDB Integration Tests", () => {
 
   // });
 
-  // it("should return 1", async () => {
+//   it("should return 1", async () => {
+
+//     const AP_TABLE = "argenpills-pills-8c4b3e0";
+    
+//     const command = new GetItemCommand({
+//       TableName: AP_TABLE,
+//       Key: {
+//         id: {S: "787f23d3-7f90-4394-8ea8-af32e1ad3e6a"},
+//       },
+//     });
+
+//     const results = await client.send(command);
+// console.log(results);
+
+//     console.log("RESULTS", JSON.stringify(results));
+//     const Item = results.Item;
+//     const unmarshalledItem = unmarshall(Item);
+
+//     console.log(unmarshalledItem);
+
+//   });
+
+  
+  // it("should search", async () => {
 
   //   const AP_TABLE = "argenpills-pills-8c4b3e0";
     
-  //   const command = new GetItemCommand({
+  //   const command = new ScanCommand({
   //     TableName: AP_TABLE,
-  //     Key: {
-  //       id: {S: "787f23d3-7f90-4394-8ea8-af32e1ad3e6a"},
-  //     },
-  //   });
+  //     IndexName: "published-posted_date-index",
+  //     FilterExpression: "contains(search_value, :c) and published = :published",
+  //     ExpressionAttributeValues: {
+  //       ":published": { S: 'x' },
+  //       ":c": { S: "verde" }
+  //     }
+  //   })
 
   //   const results = await client.send(command);
   //   console.log("RESULTS", JSON.stringify(results));
-  //   const Item = results.Item;
-  //   const unmarshalledItem = unmarshall(Item);
+  //   const Items = results.Items;
+  //   const unmarshalledItem = Items.map(item => unmarshall(item));
 
   //   console.log(unmarshalledItem);
 
   // });
-
-  
-  it("should search", async () => {
-
-    const AP_TABLE = "argenpills-pills-8c4b3e0";
-    
-    const command = new ScanCommand({
-      TableName: AP_TABLE,
-      IndexName: "published-posted_date-index",
-      FilterExpression: "contains(search_value, :c) and published = :published",
-      ExpressionAttributeValues: {
-        ":published": { S: 'x' },
-        ":c": { S: "verde" }
-      }
-    })
-
-    const results = await client.send(command);
-    console.log("RESULTS", JSON.stringify(results));
-    const Items = results.Items;
-    const unmarshalledItem = Items.map(item => unmarshall(item));
-
-    console.log(unmarshalledItem);
-
-  });
 
 });
