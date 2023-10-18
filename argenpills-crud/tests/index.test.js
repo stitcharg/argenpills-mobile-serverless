@@ -7,7 +7,7 @@ const { Testeablehandler: DeleteItemHandler } = require('../src/deleteitem/delet
 
 const { DynamoDBClient, PutItemCommand, GetItemCommand } = require("@aws-sdk/client-dynamodb");
 const { S3Client } = require("@aws-sdk/client-s3");
-const { mockSearchResults, mockGetItemsResponse, mockSingleItemResponse, mockPutItemResult } = require('./mockData');
+const { mockSearchResults, mockGetItemsResponse, mockSingleItemResponse, mockPutItemResult, mockItemNotFound } = require('./mockData');
 
 require('dotenv').config()
 
@@ -30,6 +30,23 @@ describe('Argenpills CRUD', () => {
 		expect(result.headers["X-Total-Count"]).toBe(2);
 	});
 
+	it('should return 404 to retrieve an unexisting item', async () => {
+		const event = {
+			routeKey: "GET /item",
+			pathParameters: {
+				id: "787f23d3-7f90-4394-8ea8-af32e1ad3e6a"
+			}
+		};
+
+		DynamoDBClient.prototype.send = jest.fn().mockResolvedValue(mockItemNotFound);
+
+		const result = await GetItemHandler(event, null, mockedDynamoDb);
+
+		console.log(result.statusCode);
+
+		expect(result.statusCode).toBe(404);
+	});
+
 	it('should fail retrieve one item (no id)', async () => {
 		const event = {
 			routeKey: "GET /item",
@@ -39,7 +56,7 @@ describe('Argenpills CRUD', () => {
 
 		const result = await GetItemHandler(event, null, mockedDynamoDb);
 
-		expect(result.statusCode).toBe(500);
+		expect(result.statusCode).toBe(400);
 	});
 
 	it('should retrieve one item successfully', async () => {
