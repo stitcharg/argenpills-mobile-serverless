@@ -105,6 +105,15 @@ const mockGetItemsResponse = {
 	"ScannedCount": 1
  }
 
+const mockItemNotFound = {
+	"$metadata": {
+		"httpStatusCode": 404,
+		"requestId": "RB4P3VCKKMC3NSQ6MTUJAGLJ5JVV4KQNSO5AEMVJF66Q9ASUAAJG",
+		"attempts": 1,
+		"totalRetryDelay": 0
+	 }
+}
+
 const mockSingleItemResponse = {
 	"$metadata": {
 	   "httpStatusCode": 200,
@@ -231,6 +240,7 @@ module.exports = {
 	mockGetItemsResponse,
 	mockSearchResults,
 	mockSingleItemResponse,
-	mockPutItemResult
+	mockPutItemResult,
+	mockItemNotFound
 }
 

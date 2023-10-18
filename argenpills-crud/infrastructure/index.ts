@@ -183,34 +183,60 @@ new aws.apigateway.Account("apiGatewayAccount", {
     cloudwatchRoleArn: apiGatewayLoggingRole.arn,
 });
 
+
 const httpApi = new aws.apigatewayv2.Api("argenpills-crud", {
     protocolType: "HTTP",
 });
 
 // Define routes and their corresponding Lambda functions
 const routes = [
-    { path: "/", method: "GET", lambda: lambdaFnGetItems, name: "GetItems"},
+    { path: "/items", method: "GET", lambda: lambdaFnGetItems, name: "GetItems", authenticate: false},
+    { path: "/items/{id}", method: "GET", lambda: lambdaFnGetItem, name: "GetItem", authenticate: false},
+    { path: "/search", method: "GET", lambda: lambdaFnSearch, name: "Search", authenticate: false},
+    { path: "/authenticate", method: "POST", lambda: lambdaFnAuth, name: "Authenticate", authenticate: false},
+    { path: "/items/{id}", method: "DELETE", lambda: lambdaFnDeleteItem, name: "DeleteItem", authenticate: true},
 ]
 
+const customAuthorizer = new aws.apigatewayv2.Authorizer("CognitoAuhorizer", {
+    apiId: httpApi.id,
+    authorizerType: "JWT",
+    identitySources: ["$request.header.Authorization"],
+    jwtConfiguration: {
+        audiences: [APuserPoolClient.id],
+        issuer: pulumi.interpolate`https://${APuserPool.endpoint}`,
+    }
+});
 
-for (const { path, method, lambda, name } of routes) {
+for (const { path, method, lambda, name, authenticate} of routes) {
     const integration = new aws.apigatewayv2.Integration(`${name}Integration`, {
         apiId: httpApi.id,
         integrationType: "AWS_PROXY",
+        description: name,
         integrationUri: lambda.arn,
+        payloadFormatVersion: "2.0"
     });
 
-    new aws.apigatewayv2.Route(`${method}${path.replace(/\//g, '')}Route`, {
-        apiId: httpApi.id,
-        routeKey: `${method} ${path}`,
-        target: pulumi.interpolate`integrations/${integration.id}`,
-    });
+    if (authenticate) {
+        new aws.apigatewayv2.Route(`${method}${path.replace(/\//g, '')}SecureRoute`, {
+            apiId: httpApi.id,
+            routeKey: `${method} ${path}`,
+            target: pulumi.interpolate`integrations/${integration.id}`,
+            authorizationType: "JWT",
+            authorizerId: customAuthorizer.id
+        });
+    } else {
+        new aws.apigatewayv2.Route(`${method}${path.replace(/\//g, '')}Route`, {
+            apiId: httpApi.id,
+            routeKey: `${method} ${path}`,
+            target: pulumi.interpolate`integrations/${integration.id}`,
+        });
+    }
 
     new aws.lambda.Permission(`${name}InvokePermission`, {
         action: "lambda:InvokeFunction",
         function: lambda,
         principal: "apigateway.amazonaws.com",
-    });
+    }); 
 }
 
 // Create a Deployment
@@ -224,66 +250,11 @@ const stage = new aws.apigatewayv2.Stage("dev", {
     name: "dev",
     deploymentId: deployment.id,
     autoDeploy: true,
+    accessLogSettings: {
+        destinationArn: CWAPILogs.arn,
+        format: "$context.identity.sourceIp $context.identity.caller $context.identity.user [$context.requestTime] \"$context.httpMethod $context.resourcePath $context.protocol\" $context.status $context.responseLength $context.requestId"
+        }
 });
-
-
-// // Create an API Gateway endpoint
-// const api = new awsx.classic.apigateway.API("argenpills-crud", {
-//     stageName: "dev",
-//     routes: [
-//         {
-//             path: "/authenticate",
-//             method: "POST",
-//             eventHandler: lambdaFnAuth
-//         },
-
-//         {
-//             path: "/items",
-//             method: "GET",
-//             eventHandler: lambdaFnGetItems,
-//         },
-        
-//         {
-//             path: "/items/{id}",
-//             method: "GET",
-//             eventHandler: lambdaFnGetItem,
-//         },
-
-//         {
-//             path: "/items/{id}",
-//             method: "DELETE",
-//             eventHandler: lambdaFnDeleteItem,
-//             authorizers: [{
-//                 authorizerName: "apMobile",
-//                 parameterName: "Authorization",
-//                 parameterLocation: "header",
-//                 authType: "custom",
-//                 type: "token",
-//                 handler: lambdaFnAuth
-//             }],            
-//         },
-        
-//         {
-//             path: "/search",
-//             method: "GET",
-//             eventHandler: lambdaFnSearch,
-//         }
-//     ],
-//     stageArgs: {   
-//         xrayTracingEnabled: true,     
-//         accessLogSettings: {
-//             destinationArn: CWAPILogs.arn,
-//             format: JSON.stringify({
-//                 requestId: "$context.requestId",
-//                 ip: "$context.identity.sourceIp",
-//                 user: "$context.identity.user",
-//                 status: "$context.status",  // HTTP status code
-//                 errorMessage: "$context.error.message", // Error message
-//                 errorResponse: "$context.error.response" // Error response
-//             }),
-//         },
-//     }
-// });
 
 // Export everything
 export const lambdaAuthName = lambdaFnAuth.name;
@@ -294,8 +265,8 @@ export const lambdaSearchName = lambdaFnSearch.name;
 export const lambdaDeleteName = lambdaFnDeleteItem.name;
 
 export const APuserPoolId = APuserPool.id;
+export const APuserPoolClientId = APuserPoolClient.id;
 
 export const tableName = dynamoTable.name;
 export const apiUrl = stage.invokeUrl;
-
 
