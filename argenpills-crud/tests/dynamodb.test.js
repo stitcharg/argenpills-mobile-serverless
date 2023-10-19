@@ -3,6 +3,7 @@ const { marshall, unmarshall } = require('@aws-sdk/util-dynamodb');
 
 const client = new DynamoDBClient({ region: 'us-east-1' }); // set your AWS region
 
+const AP_TABLE = "argenpills-pills-8c4b3e0";
 describe("DynamoDB Integration Tests", () => {
 
   beforeAll(async () => {
@@ -19,6 +20,54 @@ describe("DynamoDB Integration Tests", () => {
      it("should return 1", async () => {
       return true;   
      });
+
+
+     it("should group items", async () => {
+
+      const scanParams = {
+          TableName: AP_TABLE
+        };
+  
+      const scanCommand = new ScanCommand(scanParams);
+  
+      const results = await client
+            .send(scanCommand)
+            .then((data) => {
+                console.log(unmarshall(data));
+                const items = data.Items;
+    
+                // Count items by color
+                const colorCounts = {};
+    
+                items.forEach((item) => {
+                const color = item.color.S;
+    
+                if (!colorCounts[color]) {
+                    colorCounts[color] = 1;
+                } else {
+                    colorCounts[color]++;
+                }
+                });
+    
+                return {
+                    statusCode: 200,
+                    body: JSON.stringify(colorCounts)
+                };            
+            })
+            .catch((err) => {
+                console.error("Error scanning for items:", err);
+    
+                return {
+                    statusCode: 500,
+                    body: JSON.stringify({message: err})
+                };            
+            }).then(x => {
+              //console.log(x)
+            });
+
+        console.log("results",results);
+        return results;
+    });     
 
   // it("displays all tables", async() => {
   //   const run = async () => {

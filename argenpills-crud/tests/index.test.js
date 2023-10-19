@@ -4,10 +4,16 @@ const { Testeablehandler: SearchItemsHandler } = require('../src/search/search')
 const { Testeablehandler: AddItemHandler } = require('../src/additem/additem');
 const { Testeablehandler: EditItemHandler } = require('../src/edititem/edititem');
 const { Testeablehandler: DeleteItemHandler } = require('../src/deleteitem/deleteitem');
+const { Testeablehandler: DashboardHandler } = require('../src/dashboard/dashboard');
 
 const { DynamoDBClient, PutItemCommand, GetItemCommand } = require("@aws-sdk/client-dynamodb");
 const { S3Client } = require("@aws-sdk/client-s3");
-const { mockSearchResults, mockGetItemsResponse, mockSingleItemResponse, mockPutItemResult, mockItemNotFound } = require('./mockData');
+const { mockSearchResults, 
+	mockGetItemsResponse, 
+	mockSingleItemResponse, 
+	mockPutItemResult, 
+	mockItemNotFound, 
+	mockDashboardColors } = require('./mockData');
 
 require('dotenv').config()
 
@@ -41,8 +47,6 @@ describe('Argenpills CRUD', () => {
 		DynamoDBClient.prototype.send = jest.fn().mockResolvedValue(mockItemNotFound);
 
 		const result = await GetItemHandler(event, null, mockedDynamoDb);
-
-		console.log(result.statusCode);
 
 		expect(result.statusCode).toBe(404);
 	});
@@ -217,6 +221,32 @@ describe('Argenpills CRUD', () => {
 
 		expect(result.statusCode).toBe(200);
 	});
+
+	it('should retrieve dashboard information (colors)', async () => {
+
+		DynamoDBClient.prototype.send = jest.fn().mockResolvedValue(mockDashboardColors);
+
+		const result = await DashboardHandler(null, null, mockedDynamoDb);
+
+		body = JSON.parse(result.body);
+
+		expect(result.statusCode).toBe(200);
+
+		expect(body.colors.roja).toBe(1);
+	});	
+
+	it('should retrieve dashboard information (by date)', async () => {
+
+		DynamoDBClient.prototype.send = jest.fn().mockResolvedValue(mockDashboardColors);
+
+		const result = await DashboardHandler(null, null, mockedDynamoDb);
+
+		body = JSON.parse(result.body);
+
+		expect(result.statusCode).toBe(200);
+
+		expect(body.dates['2023-02']).toBe(2);
+	});		
 
 });
 
