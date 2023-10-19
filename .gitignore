@@ -1,3 +1,4 @@
 argenpills-crud/tests/node_modules/**.*
 argenpills-crud/node_modules/**.*
 node_modules
+argenpills-importer/pills.csv
