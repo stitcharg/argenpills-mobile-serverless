@@ -157,6 +157,20 @@ const lambdaFnSearch = new aws.lambda.Function("argenpills-crud-search", {
     }
 });
 
+// Dashboard
+const lambdaFnDashboard = new aws.lambda.Function("argenpills-crud-dashboard", {
+    role: lambdaRole.arn,
+    description: "AP CRUD: Dashboard",
+    handler: "dashboard.handler", 
+    runtime: aws.lambda.Runtime.NodeJS18dX,
+    code: new pulumi.asset.FileArchive("../src/dashboard"),
+    environment: {
+        variables: {
+            "AP_TABLE": dynamoTable.name
+        }
+    }
+});
+
 // Create IAM Role and Policy to allow API Gateway to write to CloudWatch Logs
 const apiGatewayLoggingRole = new aws.iam.Role("apiGatewayLoggingRole", {
     assumeRolePolicy: JSON.stringify({
@@ -195,6 +209,7 @@ const routes = [
     { path: "/search", method: "GET", lambda: lambdaFnSearch, name: "Search", authenticate: false},
     { path: "/authenticate", method: "POST", lambda: lambdaFnAuth, name: "Authenticate", authenticate: false},
     { path: "/items/{id}", method: "DELETE", lambda: lambdaFnDeleteItem, name: "DeleteItem", authenticate: true},
+    { path: "/dashboard", method: "GET", lambda: lambdaFnDashboard, name: "Dashboard", authenticate: false},
 ]
 
 const customAuthorizer = new aws.apigatewayv2.Authorizer("CognitoAuhorizer", {
@@ -207,6 +222,9 @@ const customAuthorizer = new aws.apigatewayv2.Authorizer("CognitoAuhorizer", {
     }
 });
 
+//We need to create a dependency to update the deploy
+const routeArray: aws.apigatewayv2.Route[] = [];
+
 for (const { path, method, lambda, name, authenticate} of routes) {
     const integration = new aws.apigatewayv2.Integration(`${name}Integration`, {
         apiId: httpApi.id,
@@ -216,8 +234,9 @@ for (const { path, method, lambda, name, authenticate} of routes) {
         payloadFormatVersion: "2.0"
     });
 
+    let route;
     if (authenticate) {
-        new aws.apigatewayv2.Route(`${method}${path.replace(/\//g, '')}SecureRoute`, {
+        route = new aws.apigatewayv2.Route(`${method}${path.replace(/\//g, '')}SecureRoute`, {
             apiId: httpApi.id,
             routeKey: `${method} ${path}`,
             target: pulumi.interpolate`integrations/${integration.id}`,
@@ -225,12 +244,14 @@ for (const { path, method, lambda, name, authenticate} of routes) {
             authorizerId: customAuthorizer.id
         });
     } else {
-        new aws.apigatewayv2.Route(`${method}${path.replace(/\//g, '')}Route`, {
+        route = new aws.apigatewayv2.Route(`${method}${path.replace(/\//g, '')}Route`, {
             apiId: httpApi.id,
             routeKey: `${method} ${path}`,
             target: pulumi.interpolate`integrations/${integration.id}`,
         });
     }
+
+    routeArray.push(route);
 
     new aws.lambda.Permission(`${name}InvokePermission`, {
         action: "lambda:InvokeFunction",
@@ -239,9 +260,12 @@ for (const { path, method, lambda, name, authenticate} of routes) {
     }); 
 }
 
+// Aggregate all the route URNs into a single output
+const allRoutes = pulumi.all(routeArray);
+
 // Create a Deployment
 const deployment = new aws.apigatewayv2.Deployment("ap-crud-deploy", {
-    apiId: httpApi.id,
+    apiId: httpApi.id
 });
 
 // Create a Stage
@@ -254,7 +278,7 @@ const stage = new aws.apigatewayv2.Stage("dev", {
         destinationArn: CWAPILogs.arn,
         format: "$context.identity.sourceIp $context.identity.caller $context.identity.user [$context.requestTime] \"$context.httpMethod $context.resourcePath $context.protocol\" $context.status $context.responseLength $context.requestId"
         }
-});
+}, { dependsOn: allRoutes });
 
 // Export everything
 export const lambdaAuthName = lambdaFnAuth.name;
