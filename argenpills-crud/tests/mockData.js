@@ -236,11 +236,166 @@ const mockPutItemResult = {
 	}
 }
 
+const mockDashboardColors = {
+	"$metadata": {
+	   "httpStatusCode": 200,
+	   "requestId": "F8L2107FA8BTQM1LBR3PTG2VDNVV4KQNSO5AEMVJF66Q9ASUAAJG",
+	   "attempts": 1,
+	   "totalRetryDelay": 0
+	},
+	"Count": 2,
+	"Items": [
+	   {
+		  "published": {
+			 "S": "x"
+		  },
+		  "ap_url": {
+			 "S": "https://argenpills.org/showthread.php?tid=1111"
+		  },
+		  "search_value": {
+			 "S": "red bull amarillo"
+		  },
+		  "lab_url": {
+			 "S": ""
+		  },
+		  "load": {
+			 "N": "1"
+		  },
+		  "posted_date": {
+			 "S": "2023-02-02"
+		  },
+		  "name": {
+			 "S": "Red Bull"
+		  },
+		  "substance": {
+			 "N": "1"
+		  },
+		  "image": {
+			 "S": "/pills/818730.jpg"
+		  },
+		  "notes": {
+			 "S": "Linea divisoria"
+		  },
+		  "multiple_batchs": {
+			 "BOOL": false
+		  },
+		  "lab_image": {
+			 "S": "/pills/818730.jpg"
+		  },
+		  "id": {
+			 "S": "787f23d3-7f90-4394-8ea8-af32e1ad3e6a"
+		  },
+		  "warning": {
+			 "N": "1"
+		  },
+		  "color": {
+			 "S": "amarillo"
+		  }
+	   },
+	   {
+		"published": {
+		   "S": "x"
+		},
+		"ap_url": {
+		   "S": "https://argenpills.org/showthread.php?tid=1111"
+		},
+		"search_value": {
+		   "S": "red bull roja"
+		},
+		"lab_url": {
+		   "S": ""
+		},
+		"load": {
+		   "N": "1"
+		},
+		"posted_date": {
+		   "S": "2023-02-02"
+		},
+		"name": {
+		   "S": "Red Bull"
+		},
+		"substance": {
+		   "N": "1"
+		},
+		"image": {
+		   "S": "/pills/818730.jpg"
+		},
+		"notes": {
+		   "S": "Linea divisoria"
+		},
+		"multiple_batchs": {
+		   "BOOL": false
+		},
+		"lab_image": {
+		   "S": "/pills/818730.jpg"
+		},
+		"id": {
+		   "S": "787f23d3-7f90-4394-8ea8-af32e1ad3e6a"
+		},
+		"warning": {
+		   "N": "1"
+		},
+		"color": {
+		   "S": "roja"
+		}
+	},
+	,
+	   {
+		"published": {
+		   "S": "x"
+		},
+		"ap_url": {
+		   "S": "https://argenpills.org/showthread.php?tid=1111"
+		},
+		"search_value": {
+		   "S": "red bull violeta"
+		},
+		"lab_url": {
+		   "S": ""
+		},
+		"load": {
+		   "N": "1"
+		},
+		"posted_date": {
+		   "S": "2023-01-01"
+		},
+		"name": {
+		   "S": "Red Bull"
+		},
+		"substance": {
+		   "N": "1"
+		},
+		"image": {
+		   "S": "/pills/818730.jpg"
+		},
+		"notes": {
+		   "S": "Linea divisoria"
+		},
+		"multiple_batchs": {
+		   "BOOL": false
+		},
+		"lab_image": {
+		   "S": "/pills/818730.jpg"
+		},
+		"id": {
+		   "S": "787f23d3-7a90-4394-8ea8-af32e1ad3e6a"
+		},
+		"warning": {
+		   "N": "1"
+		},
+		"color": {
+		   "S": "violeta"
+		}
+	 }	   
+	]
+}
+
 module.exports = {
 	mockGetItemsResponse,
 	mockSearchResults,
 	mockSingleItemResponse,
 	mockPutItemResult,
-	mockItemNotFound
+	mockItemNotFound,
+	mockDashboardColors
 }
 
