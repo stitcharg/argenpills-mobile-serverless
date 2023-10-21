@@ -1,12 +1,12 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as aws from "@pulumi/aws";
-import * as awsx from "@pulumi/awsx";
 
 import { APuserPool, APuserPoolClient } from "./cognito";
-import { CWAPILogs } from "./logs";
+import { CWAPILogs, CWLambdaLogs } from "./logs";
 
 // Create an IAM role for Lambda
 const lambdaRole = new aws.iam.Role("lambdaRole", {
+    description: "AP CRUD Role",
     assumeRolePolicy: aws.iam.assumeRolePolicyForPrincipal({
         Service: "lambda.amazonaws.com",
     }),
@@ -82,13 +82,45 @@ new aws.iam.RolePolicy("lambdaCognitoPolicy", {
     })),
 });
 
+// Add policy to allow writing to CloudWatch Logs
+new aws.iam.RolePolicy("lambdaClodwatchLogs", {
+    role: lambdaRole.id,
+    policy: {
+        Version: "2012-10-17",
+        Statement: [{
+            Action: [
+                "logs:CreateLogGroup",
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+            ],
+            Resource: "arn:aws:logs:*:*:*",
+            Effect: "Allow",
+        }],
+    },
+});
+
 // Authorization Lambda
 const lambdaFnAuth = new aws.lambda.Function("argenpills-crud-auth", {
     role: lambdaRole.arn,
     description: "LAMBDA para autenticar usuarios a la API",
-    handler: "index.handler", // Entry file is named `x.js` and exports a `handler` function
+    handler: "auth.handler", // Entry file is named `x.js` and exports a `handler` function
     runtime: aws.lambda.Runtime.NodeJS18dX,
-    code: new pulumi.asset.FileArchive("../../argenpills-auth"),
+    code: new pulumi.asset.FileArchive("../argenpills-auth/src/auth"),
+    environment: {
+        variables: {
+            "POOL_ID": APuserPool.id,
+            "CLIENT_ID": APuserPoolClient.id
+        }
+    }
+});
+
+// Authorization Lambda
+const lambdafnAuthRefreshToken = new aws.lambda.Function("argenpills-crud-auth-refreshtoken", {
+    role: lambdaRole.arn,
+    description: "LAMBDA para refrescar el token de autenticacion",
+    handler: "refreshtoken.handler", 
+    runtime: aws.lambda.Runtime.NodeJS18dX,
+    code: new pulumi.asset.FileArchive("../argenpills-auth/src/refreshtoken"),
     environment: {
         variables: {
             "POOL_ID": APuserPool.id,
@@ -103,7 +135,7 @@ const lambdaFnGetItems = new aws.lambda.Function("argenpills-crud-getitems", {
     description: "AP CRUD: Trar todas las pastillas publicadas",
     handler: "getitems.handler", // Entry file is named `x.js` and exports a `handler` function
     runtime: aws.lambda.Runtime.NodeJS18dX,
-    code: new pulumi.asset.FileArchive("../src/getitems"),
+    code: new pulumi.asset.FileArchive("../argenpills-crud/src/getitems"),
     environment: {
         variables: {
             "AP_TABLE": dynamoTable.name,
@@ -118,7 +150,7 @@ const lambdaFnGetItem = new aws.lambda.Function("argenpills-crud-getitem", {
     description: "AP CRUD: Traer una pastilla por ID",
     handler: "getitem.handler", 
     runtime: aws.lambda.Runtime.NodeJS18dX,
-    code: new pulumi.asset.FileArchive("../src/getitem"),
+    code: new pulumi.asset.FileArchive("../argenpills-crud/src/getitem"),
     environment: {
         variables: {
             "AP_TABLE": dynamoTable.name,
@@ -133,7 +165,7 @@ const lambdaFnDeleteItem = new aws.lambda.Function("argenpills-crud-deleteitem",
     description: "AP CRUD: Borra la pastilla. Requiere auth",
     handler: "deleteitem.handler", // Entry file is named `x.js` and exports a `handler` function
     runtime: aws.lambda.Runtime.NodeJS18dX,
-    code: new pulumi.asset.FileArchive("../src/deleteitem"),
+    code: new pulumi.asset.FileArchive("../argenpills-crud/src/deleteitem"),
     environment: {
         variables: {
             "AP_TABLE": dynamoTable.name
@@ -148,7 +180,7 @@ const lambdaFnSearch = new aws.lambda.Function("argenpills-crud-search", {
     description: "AP CRUD: Buscar por palabra clave",
     handler: "search.handler", 
     runtime: aws.lambda.Runtime.NodeJS18dX,
-    code: new pulumi.asset.FileArchive("../src/search"),
+    code: new pulumi.asset.FileArchive("../argenpills-crud/src/search"),
     environment: {
         variables: {
             "AP_TABLE": dynamoTable.name,
@@ -163,7 +195,7 @@ const lambdaFnDashboard = new aws.lambda.Function("argenpills-crud-dashboard", {
     description: "AP CRUD: Dashboard",
     handler: "dashboard.handler", 
     runtime: aws.lambda.Runtime.NodeJS18dX,
-    code: new pulumi.asset.FileArchive("../src/dashboard"),
+    code: new pulumi.asset.FileArchive("../argenpills-crud/src/dashboard"),
     environment: {
         variables: {
             "AP_TABLE": dynamoTable.name
@@ -208,6 +240,7 @@ const routes = [
     { path: "/items/{id}", method: "GET", lambda: lambdaFnGetItem, name: "GetItem", authenticate: false},
     { path: "/search", method: "GET", lambda: lambdaFnSearch, name: "Search", authenticate: false},
     { path: "/authenticate", method: "POST", lambda: lambdaFnAuth, name: "Authenticate", authenticate: false},
+    { path: "/refreshtoken", method: "POST", lambda: lambdafnAuthRefreshToken, name: "RefreshToken", authenticate: true},
     { path: "/items/{id}", method: "DELETE", lambda: lambdaFnDeleteItem, name: "DeleteItem", authenticate: true},
     { path: "/dashboard", method: "GET", lambda: lambdaFnDashboard, name: "Dashboard", authenticate: false},
 ]
@@ -257,8 +290,21 @@ for (const { path, method, lambda, name, authenticate} of routes) {
         action: "lambda:InvokeFunction",
         function: lambda,
         principal: "apigateway.amazonaws.com",
-    }); 
+    });
+    
+    new aws.lambda.Permission(`${name}allowCloudWatch`, {
+        action: "lambda:InvokeFunction",
+        function: lambda,
+        principal: "logs.amazonaws.com"
+    });    
 }
+
+// Associate the CloudWatch Log Group with the Lambda function
+new aws.cloudwatch.LogSubscriptionFilter("argenpills-crud-debug", {
+    logGroup: CWLambdaLogs.name,
+    filterPattern: "",
+    destinationArn: lambdafnAuthRefreshToken.arn,
+});
 
 // Aggregate all the route URNs into a single output
 const allRoutes = pulumi.all(routeArray);
