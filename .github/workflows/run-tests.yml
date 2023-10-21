@@ -31,9 +31,13 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
-    - name: Show folder structure
+    - name: Install dependencies for apps
       run: |
-        ls
+        cd argenpills-auth
+        npm install
+        cd ..
+        cd argenpills-crud
+        npm install
     - name: Install dependencies and run tests
       run: |
         cd tests
