@@ -18,10 +18,10 @@ jobs:
       with:
         node-version: 14  # You can specify the Node.js version you need
     - name: Change directory
-      run: cd argenpills-crud/tests
+      run: cd tests/
       
     - name: Install dependencies
       run: npm install
 
     - name: Run tests
-      run: npm test -t index
+      run: npm test
