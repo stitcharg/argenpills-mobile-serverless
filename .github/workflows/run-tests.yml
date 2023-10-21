@@ -5,9 +5,9 @@ name: Run Tests
 
 on:
   push:
-    branches: [ "main", "tests" ]
+    branches: [ "tests" ]
   pull_request:
-    branches: [ "main", "tests" ]
+    branches: [ "tests" ]
   workflow_dispatch:
     inputs:
       branch:
@@ -31,6 +31,9 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
+    - name: Show folder structure
+      run: |
+        ls
     - name: Install dependencies and run tests
       run: |
         cd tests
