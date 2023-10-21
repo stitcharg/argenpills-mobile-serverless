@@ -1,12 +1,12 @@
-const { Testeablehandler: GetItemsHandler } = require('../src/getitems/getitems');
-const { Testeablehandler: GetItemHandler } = require('../src/getitem/getitem');
-const { Testeablehandler: SearchItemsHandler } = require('../src/search/search');
-const { Testeablehandler: AddItemHandler } = require('../src/additem/additem');
-const { Testeablehandler: EditItemHandler } = require('../src/edititem/edititem');
-const { Testeablehandler: DeleteItemHandler } = require('../src/deleteitem/deleteitem');
-const { Testeablehandler: DashboardHandler } = require('../src/dashboard/dashboard');
+const { Testeablehandler: GetItemsHandler } = require('../argenpills-crud/src/getitems/getitems');
+const { Testeablehandler: GetItemHandler } = require('../argenpills-crud/src/getitem/getitem');
+const { Testeablehandler: SearchItemsHandler } = require('../argenpills-crud/src/search/search');
+const { Testeablehandler: AddItemHandler } = require('../argenpills-crud/src/additem/additem');
+const { Testeablehandler: EditItemHandler } = require('../argenpills-crud/src/edititem/edititem');
+const { Testeablehandler: DeleteItemHandler } = require('../argenpills-crud/src/deleteitem/deleteitem');
+const { Testeablehandler: DashboardHandler } = require('../argenpills-crud/src/dashboard/dashboard');
 
-const { DynamoDBClient, PutItemCommand, GetItemCommand } = require("@aws-sdk/client-dynamodb");
+const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
 const { S3Client } = require("@aws-sdk/client-s3");
 const { mockSearchResults, 
 	mockGetItemsResponse, 

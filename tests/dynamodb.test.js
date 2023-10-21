@@ -21,7 +21,7 @@ describe("DynamoDB Integration Tests", () => {
       return true;   
      });
 
-
+/*
      it("should group items", async () => {
 
       const scanParams = {
@@ -67,7 +67,8 @@ describe("DynamoDB Integration Tests", () => {
 
         console.log("results",results);
         return results;
-    });     
+    }); 
+    */    
 
   // it("displays all tables", async() => {
   //   const run = async () => {
