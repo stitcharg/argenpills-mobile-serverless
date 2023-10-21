@@ -23,5 +23,9 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: cd tests && npm test
+        cache: 'npm'      
+    - name: Install dependencies and run tests
+      working-directory: ./tests
+      run: |
+        npm install
+        npm test
