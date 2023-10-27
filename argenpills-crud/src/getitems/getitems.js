@@ -40,8 +40,6 @@ exports.Testeablehandler = async (event, context, client) => {
 			});
 			const results = await client.send(command);
 
-			console.log(results.Item);
-
 			var pillData = unmarshall(results.Item);
 
 			params.ExclusiveStartKey = {
