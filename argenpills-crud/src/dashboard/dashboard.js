@@ -3,19 +3,19 @@ const { DynamoDBClient, ScanCommand } = require("@aws-sdk/client-dynamodb");
 
 exports.Testeablehandler = async (event, context, client) => {
 
-	const headers = {
-		"Content-Type": "application/json"
-	};
+    const headers = {
+        "Content-Type": "application/json"
+    };
 
-	const AP_TABLE = process.env.AP_TABLE;
+    const AP_TABLE = process.env.AP_TABLE;
 
     const scanParams = {
         TableName: AP_TABLE
-      };
+    };
 
     const scanCommand = new ScanCommand(scanParams);
 
-	const results = await client
+    const results = await client
         .send(scanCommand)
         .then((data) => {
             const items = data.Items;
@@ -26,8 +26,8 @@ exports.Testeablehandler = async (event, context, client) => {
             return {
                 headers,
                 statusCode: 200,
-                body: JSON.stringify( {colors: colorCounts, dates: groupedByDate})
-            };            
+                body: JSON.stringify({ colors: colorCounts, dates: groupedByDate })
+            };
         })
         .catch((err) => {
             console.error("Error scanning for items:", err);
@@ -35,8 +35,8 @@ exports.Testeablehandler = async (event, context, client) => {
             return {
                 headers,
                 statusCode: 500,
-                body: JSON.stringify({message: err})
-            };            
+                body: JSON.stringify({ message: err })
+            };
         });
 
     return results;
@@ -64,20 +64,24 @@ function groupByDate(items) {
     items.forEach((item) => {
         const datePublished = item.posted_date.S;
         const monthYear = datePublished.substring(0, 7); // Extract "yyyy-mm" from the date
-  
+
         if (!groupedItems[monthYear]) {
             groupedItems[monthYear] = 1
         } else {
             groupedItems[monthYear]++;
         }
-        
-      });
-    
-    return groupedItems;
+    });
+
+    // Sorting the data by date
+    const sortedData = Object.fromEntries(
+        Object.entries(groupedItems).sort()
+    );
+
+    return Object.keys(sortedData).map((key) => ({ date: key, value: sortedData[key] }));
 }
 
 exports.handler = async (event, context) => {
-	const client = new DynamoDBClient({ region: process.env.AWS_REGION });
-	return exports.Testeablehandler(event, context, client);
+    const client = new DynamoDBClient({ region: process.env.AWS_REGION });
+    return exports.Testeablehandler(event, context, client);
 };
 
