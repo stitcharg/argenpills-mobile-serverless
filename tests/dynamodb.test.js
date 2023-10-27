@@ -17,58 +17,59 @@ describe("DynamoDB Integration Tests", () => {
   });
 
 
-     it("should return 1", async () => {
-      return true;   
-     });
+  it("should return 1", async () => {
+    return true;
+  });
 
-/*
-     it("should group items", async () => {
 
-      const scanParams = {
-          TableName: AP_TABLE
-        };
+  /*
+       it("should group items", async () => {
   
-      const scanCommand = new ScanCommand(scanParams);
+        const scanParams = {
+            TableName: AP_TABLE
+          };
+    
+        const scanCommand = new ScanCommand(scanParams);
+    
+        const results = await client
+              .send(scanCommand)
+              .then((data) => {
+                  console.log(unmarshall(data));
+                  const items = data.Items;
+      
+                  // Count items by color
+                  const colorCounts = {};
+      
+                  items.forEach((item) => {
+                  const color = item.color.S;
+      
+                  if (!colorCounts[color]) {
+                      colorCounts[color] = 1;
+                  } else {
+                      colorCounts[color]++;
+                  }
+                  });
+      
+                  return {
+                      statusCode: 200,
+                      body: JSON.stringify(colorCounts)
+                  };            
+              })
+              .catch((err) => {
+                  console.error("Error scanning for items:", err);
+      
+                  return {
+                      statusCode: 500,
+                      body: JSON.stringify({message: err})
+                  };            
+              }).then(x => {
+                //console.log(x)
+              });
   
-      const results = await client
-            .send(scanCommand)
-            .then((data) => {
-                console.log(unmarshall(data));
-                const items = data.Items;
-    
-                // Count items by color
-                const colorCounts = {};
-    
-                items.forEach((item) => {
-                const color = item.color.S;
-    
-                if (!colorCounts[color]) {
-                    colorCounts[color] = 1;
-                } else {
-                    colorCounts[color]++;
-                }
-                });
-    
-                return {
-                    statusCode: 200,
-                    body: JSON.stringify(colorCounts)
-                };            
-            })
-            .catch((err) => {
-                console.error("Error scanning for items:", err);
-    
-                return {
-                    statusCode: 500,
-                    body: JSON.stringify({message: err})
-                };            
-            }).then(x => {
-              //console.log(x)
-            });
-
-        console.log("results",results);
-        return results;
-    }); 
-    */    
+          console.log("results",results);
+          return results;
+      }); 
+      */
 
   // it("displays all tables", async() => {
   //   const run = async () => {
@@ -80,34 +81,34 @@ describe("DynamoDB Integration Tests", () => {
   //         console.error(err);
   //       }
   //     };
-      
+
   //     await run();
   // });
 
-//   it("should put and get an item", async () => {
-//     const putParams = {
-//       TableName: 'sarasa',
-//       Item: marshall({
-//         id: '1',
-//         name: 'John'
-//       })
-//     };
+  //   it("should put and get an item", async () => {
+  //     const putParams = {
+  //       TableName: 'sarasa',
+  //       Item: marshall({
+  //         id: '1',
+  //         name: 'John'
+  //       })
+  //     };
 
-//     await client.send(new PutItemCommand(putParams));
+  //     await client.send(new PutItemCommand(putParams));
 
-//     const getParams = {
-//       TableName: 'sarasa',
-//       Key: marshall({
-//         id: '1'
-//       })
-//     };
+  //     const getParams = {
+  //       TableName: 'sarasa',
+  //       Key: marshall({
+  //         id: '1'
+  //       })
+  //     };
 
-//     const { Item } = await client.send(new GetItemCommand(getParams));
-//     const unmarshalledItem = unmarshall(Item);
+  //     const { Item } = await client.send(new GetItemCommand(getParams));
+  //     const unmarshalledItem = unmarshall(Item);
 
-//     expect(unmarshalledItem.id).toBe('1');
-//     expect(unmarshalledItem.name).toBe('John');
-//   });
+  //     expect(unmarshalledItem.id).toBe('1');
+  //     expect(unmarshalledItem.name).toBe('John');
+  //   });
 
 
   // it("should scan", async () => {
@@ -149,33 +150,33 @@ describe("DynamoDB Integration Tests", () => {
 
   // });
 
-//   it("should return 1", async () => {
+  //   it("should return 1", async () => {
 
-//     const AP_TABLE = "argenpills-pills-8c4b3e0";
-    
-//     const command = new GetItemCommand({
-//       TableName: AP_TABLE,
-//       Key: {
-//         id: {S: "787f23d3-7f90-4394-8ea8-af32e1ad3e6a"},
-//       },
-//     });
+  //     const AP_TABLE = "argenpills-pills-8c4b3e0";
 
-//     const results = await client.send(command);
-// console.log(results);
+  //     const command = new GetItemCommand({
+  //       TableName: AP_TABLE,
+  //       Key: {
+  //         id: {S: "787f23d3-7f90-4394-8ea8-af32e1ad3e6a"},
+  //       },
+  //     });
 
-//     console.log("RESULTS", JSON.stringify(results));
-//     const Item = results.Item;
-//     const unmarshalledItem = unmarshall(Item);
+  //     const results = await client.send(command);
+  // console.log(results);
 
-//     console.log(unmarshalledItem);
+  //     console.log("RESULTS", JSON.stringify(results));
+  //     const Item = results.Item;
+  //     const unmarshalledItem = unmarshall(Item);
 
-//   });
+  //     console.log(unmarshalledItem);
 
-  
+  //   });
+
+
   // it("should search", async () => {
 
   //   const AP_TABLE = "argenpills-pills-8c4b3e0";
-    
+
   //   const command = new ScanCommand({
   //     TableName: AP_TABLE,
   //     IndexName: "published-posted_date-index",
