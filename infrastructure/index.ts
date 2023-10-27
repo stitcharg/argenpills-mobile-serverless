@@ -232,6 +232,12 @@ new aws.apigateway.Account("apiGatewayAccount", {
 
 const httpApi = new aws.apigatewayv2.Api("argenpills-crud", {
     protocolType: "HTTP",
+    corsConfiguration: {
+        allowOrigins: ['*'],
+        allowMethods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'],
+        allowHeaders: ['Authorization', 'Content-type'],
+        exposeHeaders: ['x-total-count']
+  },
 });
 
 // Define routes and their corresponding Lambda functions

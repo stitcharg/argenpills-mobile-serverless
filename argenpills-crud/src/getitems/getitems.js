@@ -1,9 +1,12 @@
-const { DynamoDBClient, QueryCommand } = require("@aws-sdk/client-dynamodb");
+const { DynamoDBClient, QueryCommand, GetItemCommand } = require("@aws-sdk/client-dynamodb");
 const { marshall, unmarshall } = require('@aws-sdk/util-dynamodb');
 
 exports.Testeablehandler = async (event, context, client) => {
 	let body;
 	let totalItems = 0; //will store the x-total-count for the /items
+
+	const pageSize = parseInt(event.queryStringParameters?.pageSize) || 10;
+	const lastKey = event.queryStringParameters?.lastKey;
 
 	const headers = {
 		"Content-Type": "application/json",
@@ -12,24 +15,69 @@ exports.Testeablehandler = async (event, context, client) => {
 
 	const AP_TABLE = process.env.AP_TABLE;
 
-	const command = new QueryCommand({
+	let params = {
+		Limit: pageSize,
 		TableName: AP_TABLE,
 		IndexName: "published-posted_date-index",
 		KeyConditionExpression: "#published = :published",
 		ExpressionAttributeNames: {
-			'#published': 'published' 
-		},	
+			'#published': 'published'
+		},
 		ExpressionAttributeValues: {
 			":published": { S: 'x' }
 		},
 		ScanIndexForward: false
-	});
+	};
+
+	// Add the ExclusiveStartKey using lastKey for pagination
+	if (lastKey) {
+		try {
+			const command = new GetItemCommand({
+				TableName: AP_TABLE,
+				Key: {
+					id: { S: lastKey }
+				}
+			});
+			const results = await client.send(command);
+
+			console.log(results.Item);
+
+			var pillData = unmarshall(results.Item);
+
+			params.ExclusiveStartKey = {
+				"posted_date": {
+					"S": pillData.posted_date
+				},
+				"id": {
+					"S": lastKey
+				},
+				"published": {
+					"S": pillData.published
+				}
+			};
+
+		} catch (err) {
+			console.log("ERROR GETTING LASTSHOWNKEY", err);
+
+			return {
+				headers,
+				statusCode: 500,
+				body: JSON.stringify({
+					message: err
+				})
+			};
+		}
+	}
+
+	const command = new QueryCommand(params);
 
 	//This is the URL where the images are hosted. In this case is a CF distribution
 	const CDN_IMAGES = process.env.CDN_IMAGES;
 
-	try {		
-		const { Items, Count } = await client.send(command);
+	try {
+		const myResults = await client.send(command);
+
+		const { Items, Count, LastEvaluatedKey } = await client.send(command);
 
 		const results = Items.map(unmarshall);
 
@@ -50,7 +98,10 @@ exports.Testeablehandler = async (event, context, client) => {
 		return {
 			headers,
 			statusCode: 200,
-			body: JSON.stringify(body)
+			body: JSON.stringify({
+				body,
+				LastEvaluatedKey
+			})
 		};
 
 	} catch (err) {

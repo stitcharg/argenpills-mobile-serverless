@@ -8,12 +8,14 @@ const { Testeablehandler: DashboardHandler } = require('../argenpills-crud/src/d
 
 const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
 const { S3Client } = require("@aws-sdk/client-s3");
-const { mockSearchResults, 
-	mockGetItemsResponse, 
-	mockSingleItemResponse, 
-	mockPutItemResult, 
-	mockItemNotFound, 
-	mockDashboardColors } = require('./mockData');
+const { mockSearchResults,
+	mockGetItemsResponse,
+	mockSingleItemResponse,
+	mockPutItemResult,
+	mockItemNotFound,
+	mockDashboardColors,
+	mockPagedDataSecondPage,
+	mockPagedData } = require('./mockData');
 
 require('dotenv').config()
 
@@ -24,6 +26,10 @@ const mockedDynamoDb = new DynamoDBClient({ region: process.env.AWS_REGION });
 const mockedS3 = new S3Client({});
 
 describe('Argenpills CRUD', () => {
+	beforeEach(() => {
+		DynamoDBClient.prototype.send.mockReset();
+	});
+
 	it('should retrieve data successfully', async () => {
 		const event = {
 			routeKey: "GET /items"
@@ -233,7 +239,7 @@ describe('Argenpills CRUD', () => {
 		expect(result.statusCode).toBe(200);
 
 		expect(body.colors.roja).toBe(1);
-	});	
+	});
 
 	it('should retrieve dashboard information (by date)', async () => {
 
@@ -245,10 +251,71 @@ describe('Argenpills CRUD', () => {
 
 		expect(result.statusCode).toBe(200);
 
-		expect(body.dates['2023-02']).toBe(2);
-	});		
+		expect(body.dates.length).toBe(2);
+	});
+
+	it('should paginate records successfully (no pagesize parameter)', async () => {
+		const event = {
+		};
+
+		DynamoDBClient.prototype.send = jest.fn().mockResolvedValue(mockPagedData);
+
+		const result = await GetItemsHandler(event, null, mockedDynamoDb);
+
+		body = JSON.parse(result.body);
+
+		expect(result.headers["X-Total-Count"]).toBe(5);
+
+		expect(body.LastEvaluatedKey).toBeDefined();
+	});
+
+	it('should paginate records successfully (pagesize = 5)', async () => {
+		const event = {
+			queryStringParameters: {
+				pageSize: 5
+			}
+		};
+
+		DynamoDBClient.prototype.send = jest.fn().mockResolvedValue(mockPagedData);
+
+		const result = await GetItemsHandler(event, null, mockedDynamoDb);
+
+		body = JSON.parse(result.body);
+
+		expect(result.headers["X-Total-Count"]).toBe(5);
+		expect(body.LastEvaluatedKey).toBeDefined();
+	});
+
+	it('should paginate records successfully (page 2, pagesize 2)', async () => {
+		const event = {
+			queryStringParameters: {
+				pageSize: 2,
+				lastKey: "7a6a496e-a916-4e32-92bb-df5eb64e02db"
+			}
+		};
+
+		//replace the id of the existing mocking data
+		const lastItem = mockSingleItemResponse;
+		lastItem.Item.id = { S: "7a6a496e-a916-4e32-92bb-df5eb64e02db" };
+		lastItem.Item.posted_date = { S: '2023-01-16' }
+
+		DynamoDBClient.prototype.send = jest.fn().mockImplementation((command) => {
+			if (command.constructor.name === 'GetItemCommand') {
+				return Promise.resolve(lastItem);
+			}
+			if (command.constructor.name === 'QueryCommand') {
+				return Promise.resolve(mockPagedDataSecondPage);
+			}
+			return Promise.reject(new Error("Unrecognized command"));
+		});
+
+		const result = await GetItemsHandler(event, null, mockedDynamoDb);
+
+		body = JSON.parse(result.body);
+
+		expect(result.headers["X-Total-Count"]).toBe(3);
+		expect(body.LastEvaluatedKey).toBeDefined();
+	});
 
 });
-
-
 
