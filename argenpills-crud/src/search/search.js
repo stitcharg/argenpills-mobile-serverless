@@ -1,10 +1,13 @@
-const { DynamoDBClient, QueryCommand, ScanCommand } = require("@aws-sdk/client-dynamodb");
+const { DynamoDBClient, QueryCommand, ScanCommand, GetItemCommand } = require("@aws-sdk/client-dynamodb");
 const { marshall, unmarshall } = require('@aws-sdk/util-dynamodb');
 
 exports.Testeablehandler = async (event, context, client) => {
 	let body;
 	let statusCode = 200;
 	let totalItems = 0; //will store the x-total-count for the /items
+
+	const pageSize = parseInt(event.queryStringParameters?.pageSize) || 10;
+	const lastKey = event.queryStringParameters?.lastKey;
 
 	const headers = {
 		"Content-Type": "application/json",
@@ -13,7 +16,6 @@ exports.Testeablehandler = async (event, context, client) => {
 
 	//This is the URL where the images are hosted. In this case is a CF distribution
 	const CDN_IMAGES = process.env.CDN_IMAGES;
-
 	const AP_TABLE = process.env.AP_TABLE;
 
 	const queryParams = event.queryStringParameters;
@@ -31,15 +33,56 @@ exports.Testeablehandler = async (event, context, client) => {
 		}
 		else {
 
-			const command = new ScanCommand({
+			const params = {
 				TableName: AP_TABLE,
 				IndexName: "published-posted_date-index",
 				FilterExpression: "contains(search_value, :c) and published = :published",
 				ExpressionAttributeValues: {
 					":published": { S: 'x' },
 					":c": { S: search.toLowerCase() }
+				},
+				Limit: pageSize
+			};
+
+			// Add the ExclusiveStartKey using lastKey for pagination
+			if (lastKey) {
+				try {
+					const command = new GetItemCommand({
+						TableName: AP_TABLE,
+						Key: {
+							id: { S: lastKey }
+						}
+					});
+					const results = await client.send(command);
+
+					var pillData = unmarshall(results.Item);
+
+					params.ExclusiveStartKey = {
+						"posted_date": {
+							"S": pillData.posted_date
+						},
+						"id": {
+							"S": lastKey
+						},
+						"published": {
+							"S": pillData.published
+						}
+					};
+
+				} catch (err) {
+					console.log("ERROR GETTING LASTSHOWNKEY", err);
+
+					return {
+						headers,
+						statusCode: 500,
+						body: JSON.stringify({
+							message: err
+						})
+					};
 				}
-			})
+			}
+
+			const command = new ScanCommand(params)
 			body = await client.send(command);
 
 			//set the total items
@@ -77,8 +120,3 @@ exports.handler = async (event, context) => {
 	const client = new DynamoDBClient({ region: process.env.AWS_REGION });
 	return exports.Testeablehandler(event, context, client);
 };
-
-
-
-
-
