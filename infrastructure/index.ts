@@ -1,223 +1,23 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as aws from "@pulumi/aws";
 
+import { CDN_IMAGES, API_HOSTNAME } from './consts'
+
 import { APuserPool, APuserPoolClient } from "./cognito";
 import { CWAPILogs, CWLambdaLogs } from "./logs";
-
-// Create an IAM role for Lambda
-const lambdaRole = new aws.iam.Role("lambdaRole", {
-    description: "AP CRUD Role",
-    assumeRolePolicy: aws.iam.assumeRolePolicyForPrincipal({
-        Service: "lambda.amazonaws.com",
-    }),
-});
-
-new aws.iam.RolePolicyAttachment("lambdaFullAccess", {
-    policyArn: aws.iam.ManagedPolicy.LambdaFullAccess,
-    role: lambdaRole.name,
-});
-
-// Create a DynamoDB table
-const dynamoTable = new aws.dynamodb.Table("argenpills-pills", {
-    attributes: [
-        { name: "id", type: "S" },
-        { name: "posted_date", type: "S"},
-        { name: "published", type: "S"},
-    ],
-    hashKey: "id",
-    readCapacity: 1,
-    writeCapacity: 1,
-    globalSecondaryIndexes: [
-        {
-            name: "published-posted_date-index",
-            hashKey: "published",
-            rangeKey: "posted_date",
-            readCapacity: 1,
-            writeCapacity: 1,
-            projectionType: "ALL",
-        },
-    ],    
-},
-{
-    replaceOnChanges: ["attributes"]
-});
-
-// Attach DynamoDB access policy to Lambda role
-new aws.iam.RolePolicy("lambdaDynamoPolicy", {
-    role: lambdaRole.id,
-    policy: pulumi.all([dynamoTable.arn]).apply(([tableArn]) => JSON.stringify({
-        Version: "2012-10-17",
-        Statement: [{
-            Action: [
-                "dynamodb:GetItem",
-                "dynamodb:PutItem",
-                "dynamodb:UpdateItem",
-                "dynamodb:DeleteItem",
-                "dynamodb:Query",
-                "dynamodb:Scan",
-            ],
-            Effect: "Allow",
-            Resource: [
-                tableArn,
-                `${tableArn}/index/*`
-            ],
-        }],
-    })),
-});
-
-// Attach Cognito access policy to Lambda role
-new aws.iam.RolePolicy("lambdaCognitoPolicy", {
-    role: lambdaRole.id,
-    policy: pulumi.all([APuserPool.arn]).apply(([userPoolArn]) => JSON.stringify({
-        Version: "2012-10-17",
-        Statement: [{
-            Action: [
-                "cognito-idp:AdminInitiateAuth"
-            ],
-            Effect: "Allow",
-            Resource: [
-                userPoolArn
-            ],
-        }],
-    })),
-});
-
-// Add policy to allow writing to CloudWatch Logs
-new aws.iam.RolePolicy("lambdaClodwatchLogs", {
-    role: lambdaRole.id,
-    policy: {
-        Version: "2012-10-17",
-        Statement: [{
-            Action: [
-                "logs:CreateLogGroup",
-                "logs:CreateLogStream",
-                "logs:PutLogEvents",
-            ],
-            Resource: "arn:aws:logs:*:*:*",
-            Effect: "Allow",
-        }],
-    },
-});
-
-// Authorization Lambda
-const lambdaFnAuth = new aws.lambda.Function("argenpills-crud-auth", {
-    role: lambdaRole.arn,
-    description: "LAMBDA para autenticar usuarios a la API",
-    handler: "auth.handler", // Entry file is named `x.js` and exports a `handler` function
-    runtime: aws.lambda.Runtime.NodeJS18dX,
-    code: new pulumi.asset.FileArchive("../argenpills-auth/src/auth"),
-    environment: {
-        variables: {
-            "POOL_ID": APuserPool.id,
-            "CLIENT_ID": APuserPoolClient.id
-        }
-    }
-});
-
-// Authorization Lambda
-const lambdafnAuthRefreshToken = new aws.lambda.Function("argenpills-crud-auth-refreshtoken", {
-    role: lambdaRole.arn,
-    description: "LAMBDA para refrescar el token de autenticacion",
-    handler: "refreshtoken.handler", 
-    runtime: aws.lambda.Runtime.NodeJS18dX,
-    code: new pulumi.asset.FileArchive("../argenpills-auth/src/refreshtoken"),
-    environment: {
-        variables: {
-            "POOL_ID": APuserPool.id,
-            "CLIENT_ID": APuserPoolClient.id
-        }
-    }
-});
-
-// Create the Lambda function, referencing the `src` directory for code
-const lambdaFnGetItems = new aws.lambda.Function("argenpills-crud-getitems", {
-    role: lambdaRole.arn,
-    description: "AP CRUD: Trar todas las pastillas publicadas",
-    handler: "getitems.handler", // Entry file is named `x.js` and exports a `handler` function
-    runtime: aws.lambda.Runtime.NodeJS18dX,
-    code: new pulumi.asset.FileArchive("../argenpills-crud/src/getitems"),
-    environment: {
-        variables: {
-            "AP_TABLE": dynamoTable.name,
-            "CDN_IMAGES": "https://images.argenpills.info"
-        }
-    }
-});
-
-// Create the Lambda function, referencing the `src` directory for code
-const lambdaFnGetItem = new aws.lambda.Function("argenpills-crud-getitem", {
-    role: lambdaRole.arn,
-    description: "AP CRUD: Traer una pastilla por ID",
-    handler: "getitem.handler", 
-    runtime: aws.lambda.Runtime.NodeJS18dX,
-    code: new pulumi.asset.FileArchive("../argenpills-crud/src/getitem"),
-    environment: {
-        variables: {
-            "AP_TABLE": dynamoTable.name,
-            "CDN_IMAGES": "https://images.argenpills.info"
-        }
-    }
-});
-
-// Create the Lambda function, referencing the `src` directory for code
-const lambdaFnDeleteItem = new aws.lambda.Function("argenpills-crud-deleteitem", {
-    role: lambdaRole.arn,
-    description: "AP CRUD: Borra la pastilla. Requiere auth",
-    handler: "deleteitem.handler", // Entry file is named `x.js` and exports a `handler` function
-    runtime: aws.lambda.Runtime.NodeJS18dX,
-    code: new pulumi.asset.FileArchive("../argenpills-crud/src/deleteitem"),
-    environment: {
-        variables: {
-            "AP_TABLE": dynamoTable.name
-        }
-    }
-});
-
-
-// Create the Lambda function, referencing the `src` directory for code
-const lambdaFnSearch = new aws.lambda.Function("argenpills-crud-search", {
-    role: lambdaRole.arn,
-    description: "AP CRUD: Buscar por palabra clave",
-    handler: "search.handler", 
-    runtime: aws.lambda.Runtime.NodeJS18dX,
-    code: new pulumi.asset.FileArchive("../argenpills-crud/src/search"),
-    environment: {
-        variables: {
-            "AP_TABLE": dynamoTable.name,
-            "CDN_IMAGES": "https://images.argenpills.info"
-        }
-    }
-});
-
-// Dashboard
-const lambdaFnDashboard = new aws.lambda.Function("argenpills-crud-dashboard", {
-    role: lambdaRole.arn,
-    description: "AP CRUD: Dashboard",
-    handler: "dashboard.handler", 
-    runtime: aws.lambda.Runtime.NodeJS18dX,
-    code: new pulumi.asset.FileArchive("../argenpills-crud/src/dashboard"),
-    environment: {
-        variables: {
-            "AP_TABLE": dynamoTable.name
-        }
-    }
-});
-
-// Create IAM Role and Policy to allow API Gateway to write to CloudWatch Logs
-const apiGatewayLoggingRole = new aws.iam.Role("apiGatewayLoggingRole", {
-    assumeRolePolicy: JSON.stringify({
-        Version: "2012-10-17",
-        Statement: [
-            {
-                Action: "sts:AssumeRole",
-                Effect: "Allow",
-                Principal: {
-                    Service: "apigateway.amazonaws.com",
-                },
-            },
-        ],
-    }),
-});
+import { imagesCDN, publicImagesBucket } from './public-images-bucket';
+import { certificateAPI } from "./certificates";
+import { apiGatewayLoggingRole } from "./roles";
+import dynamoTable from "./dynamodb";
+import {
+    lambdaFnGetItem,
+    lambdaFnAuth,
+    lambdafnAuthRefreshToken,
+    lambdaFnGetItems,
+    lambdaFnDeleteItem,
+    lambdaFnSearch,
+    lambdaFnDashboard
+} from './lambdafunctions';
 
 new aws.iam.RolePolicyAttachment("apiGatewayLoggingPolicyAttachment", {
     role: apiGatewayLoggingRole.name,
@@ -229,7 +29,6 @@ new aws.apigateway.Account("apiGatewayAccount", {
     cloudwatchRoleArn: apiGatewayLoggingRole.arn,
 });
 
-
 const httpApi = new aws.apigatewayv2.Api("argenpills-crud", {
     protocolType: "HTTP",
     corsConfiguration: {
@@ -237,18 +36,18 @@ const httpApi = new aws.apigatewayv2.Api("argenpills-crud", {
         allowMethods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'],
         allowHeaders: ['Authorization', 'Content-type'],
         exposeHeaders: ['x-total-count']
-  },
+    },
 });
 
 // Define routes and their corresponding Lambda functions
 const routes = [
-    { path: "/items", method: "GET", lambda: lambdaFnGetItems, name: "GetItems", authenticate: false},
-    { path: "/items/{id}", method: "GET", lambda: lambdaFnGetItem, name: "GetItem", authenticate: false},
-    { path: "/search", method: "GET", lambda: lambdaFnSearch, name: "Search", authenticate: false},
-    { path: "/authenticate", method: "POST", lambda: lambdaFnAuth, name: "Authenticate", authenticate: false},
-    { path: "/refreshtoken", method: "POST", lambda: lambdafnAuthRefreshToken, name: "RefreshToken", authenticate: true},
-    { path: "/items/{id}", method: "DELETE", lambda: lambdaFnDeleteItem, name: "DeleteItem", authenticate: true},
-    { path: "/dashboard", method: "GET", lambda: lambdaFnDashboard, name: "Dashboard", authenticate: false},
+    { path: "/items", method: "GET", lambda: lambdaFnGetItems, name: "GetItems", authenticate: false },
+    { path: "/items/{id}", method: "GET", lambda: lambdaFnGetItem, name: "GetItem", authenticate: false },
+    { path: "/search", method: "GET", lambda: lambdaFnSearch, name: "Search", authenticate: false },
+    { path: "/authenticate", method: "POST", lambda: lambdaFnAuth, name: "Authenticate", authenticate: false },
+    { path: "/refreshtoken", method: "POST", lambda: lambdafnAuthRefreshToken, name: "RefreshToken", authenticate: true },
+    { path: "/items/{id}", method: "DELETE", lambda: lambdaFnDeleteItem, name: "DeleteItem", authenticate: true },
+    { path: "/dashboard", method: "GET", lambda: lambdaFnDashboard, name: "Dashboard", authenticate: false },
 ]
 
 const customAuthorizer = new aws.apigatewayv2.Authorizer("CognitoAuhorizer", {
@@ -264,7 +63,7 @@ const customAuthorizer = new aws.apigatewayv2.Authorizer("CognitoAuhorizer", {
 //We need to create a dependency to update the deploy
 const routeArray: aws.apigatewayv2.Route[] = [];
 
-for (const { path, method, lambda, name, authenticate} of routes) {
+for (const { path, method, lambda, name, authenticate } of routes) {
     const integration = new aws.apigatewayv2.Integration(`${name}Integration`, {
         apiId: httpApi.id,
         integrationType: "AWS_PROXY",
@@ -297,12 +96,12 @@ for (const { path, method, lambda, name, authenticate} of routes) {
         function: lambda,
         principal: "apigateway.amazonaws.com",
     });
-    
+
     new aws.lambda.Permission(`${name}allowCloudWatch`, {
         action: "lambda:InvokeFunction",
         function: lambda,
         principal: "logs.amazonaws.com"
-    });    
+    });
 }
 
 // Associate the CloudWatch Log Group with the Lambda function
@@ -329,8 +128,26 @@ const stage = new aws.apigatewayv2.Stage("dev", {
     accessLogSettings: {
         destinationArn: CWAPILogs.arn,
         format: "$context.identity.sourceIp $context.identity.caller $context.identity.user [$context.requestTime] \"$context.httpMethod $context.resourcePath $context.protocol\" $context.status $context.responseLength $context.requestId"
-        }
+    }
 }, { dependsOn: allRoutes });
+
+// Create a custom domain name
+const customDomain = new aws.apigatewayv2.DomainName("api-custom-domain", {
+    domainName: API_HOSTNAME,
+
+    domainNameConfiguration: {
+        certificateArn: certificateAPI.arn,
+        endpointType: "REGIONAL",
+        securityPolicy: "TLS_1_2",
+    }
+});
+
+// Create an API mapping that connects the custom domain name to your HTTP API
+const apiMapping = new aws.apigatewayv2.ApiMapping("api-mapping", {
+    apiId: httpApi.id,
+    domainName: customDomain.domainName,
+    stage: stage.name
+});
 
 // Export everything
 export const lambdaAuthName = lambdaFnAuth.name;
@@ -346,3 +163,7 @@ export const APuserPoolClientId = APuserPoolClient.id;
 export const tableName = dynamoTable.name;
 export const apiUrl = stage.invokeUrl;
 
+export const CDNImages = imagesCDN.domainName;
+export const bucketImages = publicImagesBucket;
+
+export const APIHost = customDomain.domainName;

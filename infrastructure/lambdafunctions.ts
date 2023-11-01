@@ -1,0 +1,177 @@
+import * as pulumi from "@pulumi/pulumi";
+import * as aws from "@pulumi/aws";
+
+import { lambdaRole } from './roles';
+import dynamoTable from "./dynamodb";
+import { CDN_IMAGES } from "./consts";
+import { APuserPool, APuserPoolClient } from "./cognito";
+
+//GET ITEM
+const FN_GETITEM = "argenpills-crud-getitem";
+export const lambdaFnGetItem = new aws.lambda.Function(FN_GETITEM, {
+    role: lambdaRole.arn,
+    description: "AP CRUD: Traer una pastilla por ID",
+    handler: "getitem.handler",
+    runtime: aws.lambda.Runtime.NodeJS18dX,
+    code: new pulumi.asset.FileArchive("../argenpills-crud/src/getitem"),
+    environment: {
+        variables: {
+            "AP_TABLE": dynamoTable.name,
+            "CDN_IMAGES": CDN_IMAGES
+        }
+    }
+});
+
+// Override the retention days from default CW log
+const logGroupNameGetItem = lambdaFnGetItem.name.apply(name => `/aws/lambda/${name}`);
+
+const lambdaLogGroupGetItem = new aws.cloudwatch.LogGroup(`${FN_GETITEM}-log-group`, {
+    name: logGroupNameGetItem,
+    retentionInDays: 3,
+}, { dependsOn: [lambdaFnGetItem] });
+
+//---------
+const FN_AUTH = "argenpills-crud-auth";
+export const lambdaFnAuth = new aws.lambda.Function(FN_AUTH, {
+    role: lambdaRole.arn,
+    description: "LAMBDA para autenticar usuarios a la API",
+    handler: "auth.handler", // Entry file is named `x.js` and exports a `handler` function
+    runtime: aws.lambda.Runtime.NodeJS18dX,
+    code: new pulumi.asset.FileArchive("../argenpills-auth/src/auth"),
+    environment: {
+        variables: {
+            "POOL_ID": APuserPool.id,
+            "CLIENT_ID": APuserPoolClient.id
+        }
+    }
+});
+
+// Override the retention days from default CW log
+const logGroupNameAuth = lambdaFnAuth.name.apply(name => `/aws/lambda/${name}`);
+
+const lambdaLogGroupAuth = new aws.cloudwatch.LogGroup(`${FN_AUTH}-log-group`, {
+    name: logGroupNameAuth,
+    retentionInDays: 3,
+}, { dependsOn: [lambdaFnAuth] });
+
+//---------
+const FN_REFRESHTOKEN = "argenpills-crud-auth-refreshtoken";
+export const lambdafnAuthRefreshToken = new aws.lambda.Function(FN_REFRESHTOKEN, {
+    role: lambdaRole.arn,
+    description: "LAMBDA para refrescar el token de autenticacion",
+    handler: "refreshtoken.handler",
+    runtime: aws.lambda.Runtime.NodeJS18dX,
+    code: new pulumi.asset.FileArchive("../argenpills-auth/src/refreshtoken"),
+    environment: {
+        variables: {
+            "POOL_ID": APuserPool.id,
+            "CLIENT_ID": APuserPoolClient.id
+        }
+    }
+});
+
+// Override the retention days from default CW log
+const logGroupNameAuthRefreshToken = lambdafnAuthRefreshToken.name.apply(name => `/aws/lambda/${name}`);
+
+const lambdaLogGroupAuthRefreshToken = new aws.cloudwatch.LogGroup(`${FN_REFRESHTOKEN}-log-group`, {
+    name: logGroupNameAuthRefreshToken,
+    retentionInDays: 3,
+}, { dependsOn: [lambdaFnAuth] });
+
+
+//---------
+const FN_GETITEMS = "argenpills-crud-getitems"
+export const lambdaFnGetItems = new aws.lambda.Function(FN_GETITEMS, {
+    role: lambdaRole.arn,
+    description: "AP CRUD: Traer todas las pastillas publicadas",
+    handler: "getitems.handler", // Entry file is named `x.js` and exports a `handler` function
+    runtime: aws.lambda.Runtime.NodeJS18dX,
+    code: new pulumi.asset.FileArchive("../argenpills-crud/src/getitems"),
+    environment: {
+        variables: {
+            "AP_TABLE": dynamoTable.name,
+            "CDN_IMAGES": CDN_IMAGES
+        }
+    }
+});
+
+// Override the retention days from default CW log
+const logGroupNameGetItems = lambdaFnGetItems.name.apply(name => `/aws/lambda/${name}`);
+
+const lambdaLogGroupGetItems = new aws.cloudwatch.LogGroup(`${FN_GETITEMS}-log-group`, {
+    name: logGroupNameGetItems,
+    retentionInDays: 3,
+}, { dependsOn: [lambdaFnAuth] });
+
+
+//---------
+const FN_DELETEITEM = "argenpills-crud-deleteitem"
+export const lambdaFnDeleteItem = new aws.lambda.Function(FN_DELETEITEM, {
+    role: lambdaRole.arn,
+    description: "AP CRUD: Borra la pastilla. Requiere auth",
+    handler: "deleteitem.handler", // Entry file is named `x.js` and exports a `handler` function
+    runtime: aws.lambda.Runtime.NodeJS18dX,
+    code: new pulumi.asset.FileArchive("../argenpills-crud/src/deleteitem"),
+    environment: {
+        variables: {
+            "AP_TABLE": dynamoTable.name
+        }
+    }
+});
+
+// Override the retention days from default CW log
+const logGroupNameDeleteItem = lambdaFnDeleteItem.name.apply(name => `/aws/lambda/${name}`);
+
+const lambdaLogGroupDeleteItem = new aws.cloudwatch.LogGroup(`${FN_DELETEITEM}-log-group`, {
+    name: logGroupNameDeleteItem,
+    retentionInDays: 3,
+}, { dependsOn: [lambdaFnAuth] });
+
+
+//---------
+const FN_SEARCH = "argenpills-crud-search";
+export const lambdaFnSearch = new aws.lambda.Function(FN_SEARCH, {
+    role: lambdaRole.arn,
+    description: "AP CRUD: Buscar por palabra clave",
+    handler: "search.handler",
+    runtime: aws.lambda.Runtime.NodeJS18dX,
+    code: new pulumi.asset.FileArchive("../argenpills-crud/src/search"),
+    environment: {
+        variables: {
+            "AP_TABLE": dynamoTable.name,
+            "CDN_IMAGES": CDN_IMAGES
+        }
+    }
+});
+
+// Override the retention days from default CW log
+const logGroupNameSearch = lambdaFnSearch.name.apply(name => `/aws/lambda/${name}`);
+
+const lambdaLogGroupSearch = new aws.cloudwatch.LogGroup(`${FN_SEARCH}-log-group`, {
+    name: logGroupNameSearch,
+    retentionInDays: 3,
+}, { dependsOn: [lambdaFnAuth] });
+
+
+//---------
+const FN_DASHBOARD = "argenpills-crud-dashboard";
+export const lambdaFnDashboard = new aws.lambda.Function(FN_DASHBOARD, {
+    role: lambdaRole.arn,
+    description: "AP CRUD: Dashboard",
+    handler: "dashboard.handler",
+    runtime: aws.lambda.Runtime.NodeJS18dX,
+    code: new pulumi.asset.FileArchive("../argenpills-crud/src/dashboard"),
+    environment: {
+        variables: {
+            "AP_TABLE": dynamoTable.name
+        }
+    }
+});
+
+// Override the retention days from default CW log
+const logGroupNameDashboard = lambdaFnDashboard.name.apply(name => `/aws/lambda/${name}`);
+
+const lambdaLogGroupDashboard = new aws.cloudwatch.LogGroup(`${FN_DASHBOARD}-log-group`, {
+    name: logGroupNameDashboard,
+    retentionInDays: 3,
+}, { dependsOn: [lambdaFnDashboard] });

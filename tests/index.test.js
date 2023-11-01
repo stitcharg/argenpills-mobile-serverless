@@ -163,6 +163,41 @@ describe('Argenpills CRUD', () => {
 		expect(result.statusCode).toBe(200);
 	});
 
+	it('should return added item with pill image', async () => {
+
+		const body = {
+			"published": "x",
+			"ap_url": "https://argenpills.org/showthread.php?tid=111",
+			"image": "/pills/0.jpg",
+			"search_value": "pepe amarillo",
+			"notes": "Nota de ejemplo",
+			"id": "206374e8-2a14-4d8a-a9c0-70293aa6e7db",
+			"posted_date": "2023-01-01",
+			"name": "Pepe",
+			"color": "amarillo"
+		};
+
+		const bodyString = JSON.stringify(body);
+
+		const event = {
+			"body": bodyString
+		};
+
+		DynamoDBClient.prototype.send = jest.fn().mockImplementation((command) => {
+			if (command.constructor.name === 'PutItemCommand') {
+				return Promise.resolve(mockPutItemResult);
+			}
+			if (command.constructor.name === 'GetItemCommand') {
+				return Promise.resolve(mockSingleItemResponse);
+			}
+			return Promise.reject(new Error("Unrecognized command"));
+		});
+
+		const result = await AddItemHandler(event, null, mockedDynamoDb, mockedS3);
+
+		expect(result.statusCode).toBe(200);
+	});
+
 	it('should return edited item', async () => {
 
 		const ID = "996374e8-2a14-4d8a-a9c0-70293aa6e7db";
