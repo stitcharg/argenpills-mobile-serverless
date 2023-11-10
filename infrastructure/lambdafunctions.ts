@@ -5,6 +5,7 @@ import { lambdaRole } from './roles';
 import dynamoTable from "./dynamodb";
 import { CDN_IMAGES } from "./consts";
 import { APuserPool, APuserPoolClient } from "./cognito";
+import { publicImagesBucket } from "./public-images-bucket";
 
 //GET ITEM
 const FN_GETITEM = "argenpills-crud-getitem";
@@ -76,7 +77,7 @@ const logGroupNameAuthRefreshToken = lambdafnAuthRefreshToken.name.apply(name =>
 const lambdaLogGroupAuthRefreshToken = new aws.cloudwatch.LogGroup(`${FN_REFRESHTOKEN}-log-group`, {
     name: logGroupNameAuthRefreshToken,
     retentionInDays: 3,
-}, { dependsOn: [lambdaFnAuth] });
+}, { dependsOn: [lambdafnAuthRefreshToken] });
 
 
 //---------
@@ -101,7 +102,7 @@ const logGroupNameGetItems = lambdaFnGetItems.name.apply(name => `/aws/lambda/${
 const lambdaLogGroupGetItems = new aws.cloudwatch.LogGroup(`${FN_GETITEMS}-log-group`, {
     name: logGroupNameGetItems,
     retentionInDays: 3,
-}, { dependsOn: [lambdaFnAuth] });
+}, { dependsOn: [lambdaFnGetItems] });
 
 
 //---------
@@ -125,7 +126,7 @@ const logGroupNameDeleteItem = lambdaFnDeleteItem.name.apply(name => `/aws/lambd
 const lambdaLogGroupDeleteItem = new aws.cloudwatch.LogGroup(`${FN_DELETEITEM}-log-group`, {
     name: logGroupNameDeleteItem,
     retentionInDays: 3,
-}, { dependsOn: [lambdaFnAuth] });
+}, { dependsOn: [lambdaFnDeleteItem] });
 
 
 //---------
@@ -150,7 +151,7 @@ const logGroupNameSearch = lambdaFnSearch.name.apply(name => `/aws/lambda/${name
 const lambdaLogGroupSearch = new aws.cloudwatch.LogGroup(`${FN_SEARCH}-log-group`, {
     name: logGroupNameSearch,
     retentionInDays: 3,
-}, { dependsOn: [lambdaFnAuth] });
+}, { dependsOn: [lambdaFnSearch] });
 
 
 //---------
@@ -175,3 +176,61 @@ const lambdaLogGroupDashboard = new aws.cloudwatch.LogGroup(`${FN_DASHBOARD}-log
     name: logGroupNameDashboard,
     retentionInDays: 3,
 }, { dependsOn: [lambdaFnDashboard] });
+
+//---------
+
+const FN_EDIT = "argenpills-crud-edit";
+export const lambdaFnEdit = new aws.lambda.Function(FN_EDIT, {
+    role: lambdaRole.arn,
+    description: "AP CRUD: Edita un item",
+    handler: "edititem/edititem.handler",
+    runtime: aws.lambda.Runtime.NodeJS18dX,
+    code: new pulumi.asset.AssetArchive({
+        edititem: new pulumi.asset.FileArchive("../argenpills-crud/src/edititem"),
+        lib: new pulumi.asset.FileArchive("../argenpills-crud/src/lib")
+    }),
+    environment: {
+        variables: {
+            "AP_TABLE": dynamoTable.name,
+            "CDN_IMAGES": CDN_IMAGES,
+            "S3_BUCKET": publicImagesBucket.id
+        }
+    }
+});
+
+// Override the retention days from default CW log
+const logGroupNameEdit = lambdaFnEdit.name.apply(name => `/aws/lambda/${name}`);
+
+const lambdaLogGroupEdit = new aws.cloudwatch.LogGroup(`${FN_EDIT}-log-group`, {
+    name: logGroupNameEdit,
+    retentionInDays: 3,
+}, { dependsOn: [lambdaFnEdit] });
+
+//---------
+
+const FN_ADD = "argenpills-crud-add";
+export const lambdaFnAdd = new aws.lambda.Function(FN_ADD, {
+    role: lambdaRole.arn,
+    description: "AP CRUD: Agrega un item",
+    handler: "additem/additem.handler",
+    runtime: aws.lambda.Runtime.NodeJS18dX,
+    code: new pulumi.asset.AssetArchive({
+        additem: new pulumi.asset.FileArchive("../argenpills-crud/src/additem"),
+        lib: new pulumi.asset.FileArchive("../argenpills-crud/src/lib")
+    }),
+    environment: {
+        variables: {
+            "AP_TABLE": dynamoTable.name,
+            "CDN_IMAGES": CDN_IMAGES,
+            "S3_BUCKET": publicImagesBucket.id
+        }
+    }
+});
+
+// Override the retention days from default CW log
+const logGroupNameAdd = lambdaFnAdd.name.apply(name => `/aws/lambda/${name}`);
+
+const lambdaLogGroupAdd = new aws.cloudwatch.LogGroup(`${FN_ADD}-log-group`, {
+    name: logGroupNameAdd,
+    retentionInDays: 3,
+}, { dependsOn: [lambdaFnAdd] });
