@@ -100,5 +100,5 @@ const cdnRecord = hostedZoneId.then(zoneId => new aws.route53.Record("cdnRecord"
 }));
 
 //Export the info
-export const publicImagesBucket = bucket.id;
+export const publicImagesBucket = bucket;
 export const imagesCDN = cdn;

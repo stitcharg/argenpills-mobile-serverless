@@ -14,6 +14,8 @@ exports.Testeablehandler = async (event, context, client) => {
 	};
 
 	const AP_TABLE = process.env.AP_TABLE;
+	//This is the URL where the images are hosted. In this case is a CF distribution
+	const CDN_IMAGES = process.env.CDN_IMAGES;
 
 	let params = {
 		Limit: pageSize,
@@ -68,9 +70,6 @@ exports.Testeablehandler = async (event, context, client) => {
 	}
 
 	const command = new QueryCommand(params);
-
-	//This is the URL where the images are hosted. In this case is a CF distribution
-	const CDN_IMAGES = process.env.CDN_IMAGES;
 
 	try {
 		const myResults = await client.send(command);
