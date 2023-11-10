@@ -16,7 +16,9 @@ import {
     lambdaFnGetItems,
     lambdaFnDeleteItem,
     lambdaFnSearch,
-    lambdaFnDashboard
+    lambdaFnDashboard,
+    lambdaFnEdit,
+    lambdaFnAdd
 } from './lambdafunctions';
 
 new aws.iam.RolePolicyAttachment("apiGatewayLoggingPolicyAttachment", {
@@ -48,6 +50,8 @@ const routes = [
     { path: "/refreshtoken", method: "POST", lambda: lambdafnAuthRefreshToken, name: "RefreshToken", authenticate: true },
     { path: "/items/{id}", method: "DELETE", lambda: lambdaFnDeleteItem, name: "DeleteItem", authenticate: true },
     { path: "/dashboard", method: "GET", lambda: lambdaFnDashboard, name: "Dashboard", authenticate: false },
+    { path: "/items/{id}", method: "POST", lambda: lambdaFnEdit, name: "EditItem", authenticate: true },
+    { path: "/items", method: "PUT", lambda: lambdaFnAdd, name: "AddItem", authenticate: true },
 ]
 
 const customAuthorizer = new aws.apigatewayv2.Authorizer("CognitoAuhorizer", {
@@ -149,14 +153,7 @@ const apiMapping = new aws.apigatewayv2.ApiMapping("api-mapping", {
     stage: stage.name
 });
 
-// Export everything
-export const lambdaAuthName = lambdaFnAuth.name;
-
-export const lambdaGetItemsName = lambdaFnGetItems.name;
-export const lambdaGetItemName = lambdaFnGetItem.name;
-export const lambdaSearchName = lambdaFnSearch.name;
-export const lambdaDeleteName = lambdaFnDeleteItem.name;
-
+// Export 
 export const APuserPoolId = APuserPool.id;
 export const APuserPoolClientId = APuserPoolClient.id;
 
@@ -164,6 +161,6 @@ export const tableName = dynamoTable.name;
 export const apiUrl = stage.invokeUrl;
 
 export const CDNImages = imagesCDN.domainName;
-export const bucketImages = publicImagesBucket;
+export const bucketImages = publicImagesBucket.id;
 
 export const APIHost = customDomain.domainName;

@@ -1,64 +1,95 @@
 const { PutItemCommand, GetItemCommand } = require("@aws-sdk/client-dynamodb");
+const { PutObjectCommand } = require("@aws-sdk/client-s3");
+const fs = require('fs');
+
+const multiPartParser = require('./multipart-form-parser');
+const { marshall, unmarshall } = require("@aws-sdk/util-dynamodb");
 
 const UPL_IMAGE = 1;
 const UPL_TEST = 2;
 
+//https://livefiredev.com/aws-lambda-how-to-access-post-parameters-nodejs/
+
 // This method is both to create and update
-exports.updateItem = async (id, body, DynamoDBClient, s3Client) => {
+exports.updateItem = async (id, event, dynamoDBClient, s3Client) => {
 	let statusCode = 200;
 
 	const headers = {
 		"Content-Type": "application/json"
 	};
 
-	//console.log(body);
-	let requestJSON = JSON.parse(body);
-	const AP_TABLE = process.env.AP_TABLE;
+	let body;
+	let parsedFields;
 
-	const uploadedImageKey = await ProcessUploads(s3Client, requestJSON.upl_image, UPL_IMAGE);
-	const uploadedLabKey = await ProcessUploads(s3Client, requestJSON.upl_lab, UPL_TEST);
+	if (event.isBase64Encoded)
+		parsedFields = multiPartParser.parse(event);
+	else
+		parsedFields = JSON.parse(event.body);
+
+	const AP_TABLE = process.env.AP_TABLE;
+	//This is the URL where the images are hosted. In this case is a CF distribution
+	const CDN_IMAGES = process.env.CDN_IMAGES;
+
+	const uploadedImageKey = await ProcessUploads(s3Client, parsedFields.upl_image, UPL_IMAGE);
+	const uploadedLabKey = await ProcessUploads(s3Client, parsedFields.upl_lab, UPL_TEST);
 
 	if (uploadedImageKey != null)
-		requestJSON.image = "/" + uploadedImageKey;
+		parsedFields.image = "/" + uploadedImageKey;
 
 	if (uploadedLabKey != null)
-		requestJSON.lab_image = "/" + uploadedLabKey;
+		parsedFields.lab_image = "/" + uploadedLabKey;
+
+	const itemToSave = {
+		id: id,
+		name: parsedFields.name,
+		color: parsedFields.color,
+		posted_date: parsedFields.posted_date,
+		image: parsedFields.image,
+		load: parsedFields.load,
+		substance: parsedFields.substance,
+		warning: parsedFields.warning,
+		notes: parsedFields.notes,
+		ap_url: parsedFields.ap_url,
+		lab_url: parsedFields.lab_url,
+		lab_image: parsedFields.lab_image,
+		search_value: parsedFields.name.toLowerCase() + " " + parsedFields.color.toLowerCase(),
+		multiple_batchs: parsedFields.multiple_batchs,
+		published: 'x'
+	};
 
 	const putCommand = new PutItemCommand({
 		TableName: AP_TABLE,
-		Item: {
-			id: id,
-			name: requestJSON.name,
-			color: requestJSON.color,
-			posted_date: requestJSON.posted_date,
-			image: requestJSON.image,
-			load: requestJSON.load,
-			substance: requestJSON.substance,
-			warning: requestJSON.warning,
-			notes: requestJSON.notes,
-			ap_url: requestJSON.ap_url,
-			lab_url: requestJSON.lab_url,
-			lab_image: requestJSON.lab_image,
-			search_value: requestJSON.name.toLowerCase() + " " + requestJSON.color.toLowerCase(),
-			published: 'x',
-			multiple_batchs: requestJSON.multiple_batchs
-		}
+		Item: marshall(itemToSave, { removeUndefinedValues: true })
 	});
 
 	try {
 		//update
-		const results = await DynamoDBClient.send(putCommand);
+		await dynamoDBClient.send(putCommand);
+
+		console.log("Item updated in DynamoDb");
 
 		//re-read the information
 		const getCommand = new GetItemCommand({
 			TableName: AP_TABLE,
 			Key: {
-				id: id
+				id: { S: id }
 			}
 		});
 
-		const getResult = await DynamoDBClient.send(getCommand);
-		body = getResult.Item;
+		const getResult = await dynamoDBClient.send(getCommand);
+
+		body = unmarshall(getResult.Item);
+
+		console.log(body);
+
+		if (body.image)
+			body.image = CDN_IMAGES + body.image;
+
+		if (body.lab_image)
+			body.lab_image = CDN_IMAGES + body.lab_image;
+
+
+
 	} catch (err) {
 		statusCode = 400;
 		body = err.message;
@@ -82,15 +113,11 @@ const ProcessUploads = async function (s3Client, picturesObject, type) {
 
 	const uploadedResults = await UploadImage(s3Client, picturesObject, prefix);
 
-	console.log("uploadedresults", uploadedResults);
-
 	return uploadedResults.Key;
 };
 
 
 const UploadImage = async function (s3Client, imageToUpload, prefix) {
-	//console.log(`Parameters: ImagetoUpload ${imageToUpload} | event ${event}`);
-
 	const randomID = parseInt(Math.random() * 10000000);
 	const Key = `${prefix}/${randomID}.jpg`;
 
@@ -104,20 +131,20 @@ const UploadImage = async function (s3Client, imageToUpload, prefix) {
 	console.log("Upload full bucket path:", fullBucketPath);
 
 	try {
-		let binaryFile = new Buffer.from(imageToUpload, 'base64');
+		let binaryFile = fs.readFileSync(imageToUpload.path);
 
-		let params =
+		let uploadParams =
 		{
 			Bucket: bucket,
 			Key: Key,
 			Body: binaryFile,
-			ContentType: 'image/jpg'
+			ContentType: imageToUpload.contentType
 		};
 
-		let s3Response = await s3Client.upload(params).promise();
-		// request successed
+		let s3Response = await s3Client.send(new PutObjectCommand(uploadParams));
 
-		console.log(`File uploaded to S3 at ${s3Response.Bucket} bucket. File location: ${s3Response.Location}`);
+		// request successed
+		console.log(`File uploaded to S3 at ${bucket} bucket. File location: ${fullBucketPath}`);
 
 		//We return the key (so we can use the CDN to serve the images)
 		return { Status: "OK", Key: Key };
