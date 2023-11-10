@@ -80,15 +80,11 @@ exports.updateItem = async (id, event, dynamoDBClient, s3Client) => {
 
 		body = unmarshall(getResult.Item);
 
-		console.log(body);
-
 		if (body.image)
 			body.image = CDN_IMAGES + body.image;
 
 		if (body.lab_image)
 			body.lab_image = CDN_IMAGES + body.lab_image;
-
-
 
 	} catch (err) {
 		statusCode = 400;
