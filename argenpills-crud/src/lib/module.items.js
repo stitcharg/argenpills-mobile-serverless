@@ -21,6 +21,9 @@ exports.updateItem = async (id, event, dynamoDBClient, s3Client) => {
 	let body;
 	let parsedFields;
 
+	//uncomment this if you want to debug the payload in cw
+	//console.log("event", event);
+
 	if (event.isBase64Encoded)
 		parsedFields = multiPartParser.parse(event);
 	else
