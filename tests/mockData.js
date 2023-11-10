@@ -156,7 +156,7 @@ const mockSingleItemResponse = {
 			"BOOL": false
 		},
 		"lab_image": {
-			"S": "/pills/818730.jpg"
+			"S": "/pills/818734.jpg"
 		},
 		"id": {
 			"S": "787f23d3-7f90-4394-8ea8-af32e1ad3e6a"
