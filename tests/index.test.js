@@ -25,6 +25,8 @@ jest.mock("@aws-sdk/client-s3");
 const mockedDynamoDb = new DynamoDBClient({ region: process.env.AWS_REGION });
 const mockedS3 = new S3Client({});
 
+const CDN_IMAGES = process.env.CDN_IMAGES;
+
 describe('Argenpills CRUD', () => {
 	beforeEach(() => {
 		DynamoDBClient.prototype.send.mockReset();
@@ -382,37 +384,48 @@ describe('Argenpills CRUD', () => {
 		expect(body.LastEvaluatedKey).toBeDefined();
 	});
 
-	it('should upload new image', async () => {
-		/*
-		const event = {
-			queryStringParameters: {
-				pageSize: 2,
-				lastKey: "7a6a496e-a916-4e32-92bb-df5eb64e02db"
-			}
-		};
+	it.only('should edit item with 2 images and return values', async () => {
 
-		//replace the id of the existing mocking data
-		const lastItem = mockSingleItemResponse;
-		lastItem.Item.id = { S: "7a6a496e-a916-4e32-92bb-df5eb64e02db" };
-		lastItem.Item.posted_date = { S: '2023-01-16' }
+		const pillPath = "/pills/pill.jpg";
+		const labPath = "/pills/lab.jpg";
+
+		const event = {
+			headers: {
+				accept: '*/*',
+				authorization: 'Bearer eyJraWQiOi...g',
+				'content-length': '1722',
+				'content-type': 'multipart/form-data; boundary=X-INSOMNIA-BOUNDARY',
+				host: 'api.sandbox.argenpills.info',
+			},
+			body: 'LS1YLUlOU09NTklBLUJPVU5EQVJZDQpDb250ZW50LURpc3Bvc2l0aW9uOiBmb3JtLWRhdGE7IG5hbWU9InB1Ymxpc2hlZCINCg0KeA0KLS1YLUlOU09NTklBLUJPVU5EQVJZDQpDb250ZW50LURpc3Bvc2l0aW9uOiBmb3JtLWRhdGE7IG5hbWU9ImFwX3VybCINCg0KaHR0cHM6Ly9hcmdlbnBpbGxzLm9yZy9zaG93dGhyZWFkLnBocD90aWQ9NzM0Nw0KLS1YLUlOU09NTklBLUJPVU5EQVJZDQpDb250ZW50LURpc3Bvc2l0aW9uOiBmb3JtLWRhdGE7IG5hbWU9InNlYXJjaF92YWx1ZSINCg0KaW50ZXIgbWlhbWkgcm9zYQ0KLS1YLUlOU09NTklBLUJPVU5EQVJZDQpDb250ZW50LURpc3Bvc2l0aW9uOiBmb3JtLWRhdGE7IG5hbWU9ImxhYl91cmwiDQoNCg0KLS1YLUlOU09NTklBLUJPVU5EQVJZDQpDb250ZW50LURpc3Bvc2l0aW9uOiBmb3JtLWRhdGE7IG5hbWU9ImxvYWQiDQoNCjANCi0tWC1JTlNPTU5JQS1CT1VOREFSWQ0KQ29udGVudC1EaXNwb3NpdGlvbjogZm9ybS1kYXRhOyBuYW1lPSJwb3N0ZWRfZGF0ZSINCg0KMjAyMy0xMC0wMw0KLS1YLUlOU09NTklBLUJPVU5EQVJZDQpDb250ZW50LURpc3Bvc2l0aW9uOiBmb3JtLWRhdGE7IG5hbWU9Im5hbWUiDQoNCmVkaXQgSW50ZXIgTWlhbWkNCi0tWC1JTlNPTU5JQS1CT1VOREFSWQ0KQ29udGVudC1EaXNwb3NpdGlvbjogZm9ybS1kYXRhOyBuYW1lPSJzdWJzdGFuY2UiDQoNCjANCi0tWC1JTlNPTU5JQS1CT1VOREFSWQ0KQ29udGVudC1EaXNwb3NpdGlvbjogZm9ybS1kYXRhOyBuYW1lPSJpbWFnZSINCg0KDQotLVgtSU5TT01OSUEtQk9VTkRBUlkNCkNvbnRlbnQtRGlzcG9zaXRpb246IGZvcm0tZGF0YTsgbmFtZT0ibm90ZXMiDQoNClNvbiByb3NhIGNoaWxsw7NuLiBObyBwYXJlY2VuIHRlbmVyIGJ1ZW4gbGFxdWVhZG8uIE5vIHNhYmVtb3Mgc2kgdGllbmVuIGzDrW5lYSBkaXZpc29yaWEuDQotLVgtSU5TT01OSUEtQk9VTkRBUlkNCkNvbnRlbnQtRGlzcG9zaXRpb246IGZvcm0tZGF0YTsgbmFtZT0ibXVsdGlwbGVfYmF0Y2hzIg0KDQpmYWxzZQ0KLS1YLUlOU09NTklBLUJPVU5EQVJZDQpDb250ZW50LURpc3Bvc2l0aW9uOiBmb3JtLWRhdGE7IG5hbWU9ImlkIg0KDQoxMjBjNTgwZi05OTUxLTQxNjgtOGE5OS03NmFkODdjYTZlODINCi0tWC1JTlNPTU5JQS1CT1VOREFSWQ0KQ29udGVudC1EaXNwb3NpdGlvbjogZm9ybS1kYXRhOyBuYW1lPSJ3YXJuaW5nIg0KDQowDQotLVgtSU5TT01OSUEtQk9VTkRBUlkNCkNvbnRlbnQtRGlzcG9zaXRpb246IGZvcm0tZGF0YTsgbmFtZT0iY29sb3IiDQoNClJvc2ENCi0tWC1JTlNPTU5JQS1CT1VOREFSWQ0KQ29udGVudC1EaXNwb3NpdGlvbjogZm9ybS1kYXRhOyBuYW1lPSJ1cGxfaW1hZ2UiOyBmaWxlbmFtZT0icGl4ZWwucG5nIg0KQ29udGVudC1UeXBlOiBpbWFnZS9wbmcNCg0KiVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABHNCSVQICAgIfAhkiAAAAA1JREFUCJljmOi45j8ABWMCfhutbngAAAAASUVORK5CYIINCi0tWC1JTlNPTU5JQS1CT1VOREFSWQ0KQ29udGVudC1EaXNwb3NpdGlvbjogZm9ybS1kYXRhOyBuYW1lPSJ1cGxfbGFiIjsgZmlsZW5hbWU9InBpeGVsLnBuZyINCkNvbnRlbnQtVHlwZTogaW1hZ2UvcG5nDQoNColQTkcNChoKAAAADUlIRFIAAAABAAAAAQgGAAAAHxXEiQAAAARzQklUCAgICHwIZIgAAAANSURBVAiZY5jouOY/AAVjAn4brW54AAAAAElFTkSuQmCCDQotLVgtSU5TT01OSUEtQk9VTkRBUlktLQ0K',
+			isBase64Encoded: true
+		}
+
+		var editedItem = mockSingleItemResponse;
+		editedItem.Item.lab_image = { S: labPath };
+		editedItem.Item.image = { S: pillPath };
 
 		DynamoDBClient.prototype.send = jest.fn().mockImplementation((command) => {
-			if (command.constructor.name === 'GetItemCommand') {
-				return Promise.resolve(lastItem);
+			if (command.constructor.name === 'PutItemCommand') {
+				return Promise.resolve(mockPutItemResult);
 			}
-			if (command.constructor.name === 'QueryCommand') {
-				return Promise.resolve(mockPagedDataSecondPage);
+			if (command.constructor.name === 'GetItemCommand') {
+				return Promise.resolve(editedItem);
 			}
 			return Promise.reject(new Error("Unrecognized command"));
 		});
 
-		const result = await GetItemsHandler(event, null, mockedDynamoDb);
+		const result = await AddItemHandler(event, null, mockedDynamoDb, mockedS3);
+
+		expect(result.statusCode).toBe(200);
 
 		body = JSON.parse(result.body);
 
-		expect(result.headers["X-Total-Count"]).toBe(3);
-		expect(body.LastEvaluatedKey).toBeDefined();
-		*/
+		expect(body.image).toBeDefined();
+		expect(body.image).toBe(CDN_IMAGES + pillPath);
+
+		expect(body.lab_image).toBeDefined();
+		expect(body.lab_image).toBe(CDN_IMAGES + labPath);
 	});
 
 });
