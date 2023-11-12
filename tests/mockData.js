@@ -759,6 +759,12 @@ const mockPagedDataSecondPage = {
 
 };
 
+const mockTableDescription = {
+	"Table": {
+		"ItemCount": 9
+	}
+};
+
 module.exports = {
 	mockGetItemsResponse,
 	mockSearchResults,
@@ -768,5 +774,6 @@ module.exports = {
 	mockDashboardColors,
 	mockAllItemsData,
 	mockPagedData,
-	mockPagedDataSecondPage
+	mockPagedDataSecondPage,
+	mockTableDescription
 }
