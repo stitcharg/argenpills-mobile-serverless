@@ -1,4 +1,4 @@
-const { DynamoDBClient, QueryCommand, GetItemCommand } = require("@aws-sdk/client-dynamodb");
+const { DynamoDBClient, QueryCommand, GetItemCommand, DescribeTableCommand } = require("@aws-sdk/client-dynamodb");
 const { marshall, unmarshall } = require('@aws-sdk/util-dynamodb');
 
 exports.Testeablehandler = async (event, context, client) => {
@@ -79,7 +79,7 @@ exports.Testeablehandler = async (event, context, client) => {
 		const results = Items.map(unmarshall);
 
 		//set the total items
-		headers["X-Total-Count"] = Count;
+		headers["X-Total-Count"] = await countItems(client, AP_TABLE);
 
 		//Prefix the items URL with the CDN, just to make it simpler to display
 		body = results.map(row => {
@@ -96,7 +96,7 @@ exports.Testeablehandler = async (event, context, client) => {
 			headers,
 			statusCode: 200,
 			body: JSON.stringify({
-				body,
+				data: body,
 				LastEvaluatedKey
 			})
 		};
@@ -106,6 +106,23 @@ exports.Testeablehandler = async (event, context, client) => {
 		throw new Error('Unable to query data');
 	}
 };
+
+async function countItems(client, tableName) {
+	const params = new DescribeTableCommand(
+		{
+			TableName: tableName
+		}
+	);
+
+	try {
+		const response = await client.send(params);
+
+		return response.Table.ItemCount;
+	} catch (ex) {
+		console.log("ERROR COUNTING ITEMS", ex);
+		return 0;
+	}
+}
 
 exports.handler = async (event, context) => {
 	const client = new DynamoDBClient({ region: process.env.AWS_REGION });
