@@ -41,6 +41,7 @@ new aws.iam.RolePolicy("lambdaDynamoPolicy", {
                 "dynamodb:DeleteItem",
                 "dynamodb:Query",
                 "dynamodb:Scan",
+                "dynamodb:DescribeTable"
             ],
             Effect: "Allow",
             Resource: [

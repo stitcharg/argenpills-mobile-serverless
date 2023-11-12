@@ -15,7 +15,8 @@ const { mockSearchResults,
 	mockItemNotFound,
 	mockDashboardColors,
 	mockPagedDataSecondPage,
-	mockPagedData } = require('./mockData');
+	mockPagedData,
+	mockTableDescription } = require('./mockData');
 
 require('dotenv').config()
 
@@ -33,20 +34,25 @@ describe('Argenpills CRUD', () => {
 	});
 
 	it('should retrieve data successfully', async () => {
-		const event = {
-			routeKey: "GET /items"
-		};
+		const event = {};
 
-		DynamoDBClient.prototype.send = jest.fn().mockResolvedValue(mockGetItemsResponse);
+		DynamoDBClient.prototype.send = jest.fn().mockImplementation((command) => {
+			if (command.constructor.name === 'DescribeTableCommand') {
+				return Promise.resolve(mockTableDescription);
+			}
+			if (command.constructor.name === 'QueryCommand') {
+				return Promise.resolve(mockGetItemsResponse);
+			}
+			return Promise.reject(new Error("Unrecognized command"));
+		});
 
 		const result = await GetItemsHandler(event, null, mockedDynamoDb);
 
-		expect(result.headers["X-Total-Count"]).toBe(2);
+		expect(result.headers["X-Total-Count"]).toBe(9);
 	});
 
 	it('should return 404 to retrieve an unexisting item', async () => {
 		const event = {
-			routeKey: "GET /item",
 			pathParameters: {
 				id: "787f23d3-7f90-4394-8ea8-af32e1ad3e6a"
 			}
@@ -60,9 +66,7 @@ describe('Argenpills CRUD', () => {
 	});
 
 	it('should fail retrieve one item (no id)', async () => {
-		const event = {
-			routeKey: "GET /item",
-		};
+		const event = {};
 
 		DynamoDBClient.prototype.send = jest.fn().mockResolvedValue(mockSingleItemResponse);
 
@@ -74,7 +78,6 @@ describe('Argenpills CRUD', () => {
 	it('should retrieve one item successfully', async () => {
 
 		const event = {
-			routeKey: "GET /item",
 			pathParameters: {
 				id: "787f23d3-7f90-4394-8ea8-af32e1ad3e6a"
 			}
@@ -280,7 +283,6 @@ describe('Argenpills CRUD', () => {
 	it('should delete the item', async () => {
 
 		const event = {
-			routeKey: "GET /item",
 			pathParameters: {
 				id: "787f23d3-7f90-4394-8ea8-af32e1ad3e6a"
 			}
@@ -325,7 +327,17 @@ describe('Argenpills CRUD', () => {
 		const event = {
 		};
 
-		DynamoDBClient.prototype.send = jest.fn().mockResolvedValue(mockPagedData);
+		mockTableDescription.Table.ItemCount = 5;
+
+		DynamoDBClient.prototype.send = jest.fn().mockImplementation((command) => {
+			if (command.constructor.name === 'DescribeTableCommand') {
+				return Promise.resolve(mockTableDescription);
+			}
+			if (command.constructor.name === 'QueryCommand') {
+				return Promise.resolve(mockPagedData);
+			}
+			return Promise.reject(new Error("Unrecognized command"));
+		});
 
 		const result = await GetItemsHandler(event, null, mockedDynamoDb);
 
@@ -343,7 +355,19 @@ describe('Argenpills CRUD', () => {
 			}
 		};
 
-		DynamoDBClient.prototype.send = jest.fn().mockResolvedValue(mockPagedData);
+		mockTableDescription.Table.ItemCount = 5;
+
+		DynamoDBClient.prototype.send = jest.fn().mockImplementation((command) => {
+			if (command.constructor.name === 'DescribeTableCommand') {
+				return Promise.resolve(mockTableDescription);
+			}
+			if (command.constructor.name === 'QueryCommand') {
+				return Promise.resolve(mockPagedData);
+			}
+			return Promise.reject(new Error("Unrecognized command"));
+		});
+
+		//DynamoDBClient.prototype.send = jest.fn().mockResolvedValue(mockPagedData);
 
 		const result = await GetItemsHandler(event, null, mockedDynamoDb);
 
@@ -366,12 +390,17 @@ describe('Argenpills CRUD', () => {
 		lastItem.Item.id = { S: "7a6a496e-a916-4e32-92bb-df5eb64e02db" };
 		lastItem.Item.posted_date = { S: '2023-01-16' }
 
+		mockTableDescription.Table.ItemCount = 3;
+
 		DynamoDBClient.prototype.send = jest.fn().mockImplementation((command) => {
 			if (command.constructor.name === 'GetItemCommand') {
 				return Promise.resolve(lastItem);
 			}
 			if (command.constructor.name === 'QueryCommand') {
 				return Promise.resolve(mockPagedDataSecondPage);
+			}
+			if (command.constructor.name === 'DescribeTableCommand') {
+				return Promise.resolve(mockTableDescription);
 			}
 			return Promise.reject(new Error("Unrecognized command"));
 		});
@@ -384,7 +413,7 @@ describe('Argenpills CRUD', () => {
 		expect(body.LastEvaluatedKey).toBeDefined();
 	});
 
-	it.only('should edit item with 2 images and return values', async () => {
+	it('should edit item with 2 images and return values', async () => {
 
 		const pillPath = "/pills/pill.jpg";
 		const labPath = "/pills/lab.jpg";
