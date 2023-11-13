@@ -48,15 +48,15 @@ exports.updateItem = async (id, event, dynamoDBClient, s3Client) => {
 		color: parsedFields.color,
 		posted_date: parsedFields.posted_date,
 		image: parsedFields.image,
-		load: parsedFields.load,
-		substance: parsedFields.substance,
-		warning: parsedFields.warning,
+		load: parseNumber(parsedFields.load),
+		substance: parseNumber(parsedFields.substance),
+		warning: parseNumber(parsedFields.warning),
 		notes: parsedFields.notes,
 		ap_url: parsedFields.ap_url,
 		lab_url: parsedFields.lab_url,
 		lab_image: parsedFields.lab_image,
 		search_value: parsedFields.name.toLowerCase() + " " + parsedFields.color.toLowerCase(),
-		multiple_batchs: parsedFields.multiple_batchs,
+		multiple_batchs: parseBoolean(parsedFields.multiple_batchs),
 		published: 'x'
 	};
 
@@ -153,4 +153,14 @@ const UploadImage = async function (s3Client, imageToUpload, prefix) {
 		console.error(ex);
 		return { Status: "ERROR" };
 	}
+}
+
+function parseNumber(value) {
+	if (value == "" || value == null) return undefined;
+
+	return parseInt(value);
+}
+
+function parseBoolean(value) {
+	return (value != "");
 }
