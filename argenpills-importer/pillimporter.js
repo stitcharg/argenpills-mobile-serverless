@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 
 const region = 'us-east-1';
-const tableName = 'argenpills-pills-8c4b3e0'; 
+const tableName = 'argenpills-pills-8c4b3e0';
 const csvFilePath = path.resolve(__dirname, 'pills.csv');
 
 const client = new DynamoDBClient({ region });
@@ -30,7 +30,7 @@ const putItem = async (item) => {
 stream.on('data', (row) => {
     console.log(`Adding item ${row.id}...`);
     const item = {
-        'id': { S:row.id }
+        'id': { S: row.id }
     };
 
     item['ap_url'] = { S: row.ap_url };
@@ -47,14 +47,14 @@ stream.on('data', (row) => {
     item['search_value'] = { S: row.search_value };
     item['substance'] = { N: parseNumber(row.substance) };
     item['warning'] = { N: parseNumber(row.warning) };
-    
+
     putItem(item);
 
     console.log(`Item added`);
 });
 
 stream.on('end', () => {
-  console.log('CSV import completed.');
+    console.log('CSV import completed.');
 });
 
 function parseNumber(value) {
@@ -64,5 +64,5 @@ function parseNumber(value) {
 }
 
 function parseBoolean(value) {
-    return (value!="");
+    return (value != "");
 }
