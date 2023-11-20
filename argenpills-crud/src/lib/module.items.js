@@ -57,8 +57,10 @@ exports.updateItem = async (id, event, dynamoDBClient, s3Client) => {
 		lab_image: parsedFields.lab_image,
 		search_value: parsedFields.name.toLowerCase() + " " + parsedFields.color.toLowerCase(),
 		multiple_batchs: parseBoolean(parsedFields.multiple_batchs),
-		published: 'x'
+		published: parsedFields.published
 	};
+
+	console.log(itemToSave);
 
 	const putCommand = new PutItemCommand({
 		TableName: AP_TABLE,
@@ -156,7 +158,7 @@ const UploadImage = async function (s3Client, imageToUpload, prefix) {
 }
 
 function parseNumber(value) {
-	if (value == "" || value == null) return undefined;
+	if (value || value == "" || value == null) return undefined;
 
 	return parseInt(value);
 }

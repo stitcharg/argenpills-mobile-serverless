@@ -25,12 +25,12 @@ exports.Testeablehandler = async (event, context, cognitoClient) => {
   try {
     const command = new InitiateAuthCommand(params);
 
-    const data = await cognitoClient.send(command);
+    const cognitoResponse = await cognitoClient.send(command);
 
-    return {
-      statusCode: 200,
-      body: JSON.stringify(data.AuthenticationResult),
-    };
+    response.statusCode = 200;
+    response.body = JSON.stringify({
+      token: cognitoResponse.AuthenticationResult.IdToken
+    });
 
   } catch (err) {
     console.log("ERROR", err);
