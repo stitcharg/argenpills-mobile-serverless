@@ -17,48 +17,49 @@ describe("Should authenticate in cognito", () => {
 
   afterAll(async () => {
   });
-  
-  it("should authenticate", async() => {
+
+  it("should authenticate", async () => {
 
     const event = {
-        body: JSON.stringify( {
-			      username: "Test",
-            password: "12345" }
-        )
+      body: JSON.stringify({
+        username: "Test",
+        password: "12345"
+      }
+      )
     }
 
-		CognitoIdentityProviderClient.prototype.send = jest.fn().mockResolvedValue(mockCognitoData);
+    CognitoIdentityProviderClient.prototype.send = jest.fn().mockResolvedValue(mockCognitoData);
 
-		const result = await AuthenticateHandler(event, null, mockedCognitoIdentityClient);
+    const result = await AuthenticateHandler(event, null, mockedCognitoIdentityClient);
 
-		expect(result.statusCode).toBe(200);
+    expect(result.statusCode).toBe(200);
 
     const parsedBody = JSON.parse(result.body);
 
     expect(parsedBody.token).toBeDefined();
     expect(parsedBody.refreshToken).toBeDefined();
 
-});
+  });
 
-it("should refresh token", async() => {
+  it("should refresh token", async () => {
 
-  const event = {
-      body: JSON.stringify( 
+    const event = {
+      body: JSON.stringify(
         {
           refreshToken: "eyJjdHkiOiJKV1QiLC..."
         }
       )
-  }
+    }
 
-  CognitoIdentityProviderClient.prototype.send = jest.fn().mockResolvedValue(mockCognitoData);
+    CognitoIdentityProviderClient.prototype.send = jest.fn().mockResolvedValue(mockCognitoData);
 
-  const result = await RefreshTokenHandler(event, null, mockedCognitoIdentityClient);
+    const result = await RefreshTokenHandler(event, null, mockedCognitoIdentityClient);
 
-  expect(result.statusCode).toBe(200);
+    expect(result.statusCode).toBe(200);
 
-  const parsedBody = JSON.parse(result.body);
+    const parsedBody = JSON.parse(result.body);
 
-  expect(parsedBody.AccessToken).toBeDefined();
-})
+    expect(parsedBody.token).toBeDefined();
+  })
 
 });
