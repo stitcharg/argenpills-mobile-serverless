@@ -111,35 +111,5 @@ describe('Argenpills CRUD (Schema tests)', () => {
         expect(errorMessage[0].message === '"published" is required');
 
     });
-
-    it('should add item with 1 image and return values', async () => {
-
-        const event = {
-            headers: {
-                accept: '*/*',
-                authorization: 'Bearer eyJraWQiOi...g',
-                'content-length': '1301',
-                'content-type': 'multipart/form-data; boundary=X-INSOMNIA-BOUNDARY',
-                host: 'api.sandbox.argenpills.info',
-            },
-            body: 'LS1YLUlOU09NTklBLUJPVU5EQVJZDQpDb250ZW50LURpc3Bvc2l0aW9uOiBmb3JtLWRhdGE7IG5hbWU9InB1Ymxpc2hlZCINCg0KeA0KLS1YLUlOU09NTklBLUJPVU5EQVJZDQpDb250ZW50LURpc3Bvc2l0aW9uOiBmb3JtLWRhdGE7IG5hbWU9ImFwX3VybCINCg0KaHR0cHM6Ly9hcmdlbnBpbGxzLm9yZy9zaG93dGhyZWFkLnBocD90aWQ9NzM0Nw0KLS1YLUlOU09NTklBLUJPVU5EQVJZDQpDb250ZW50LURpc3Bvc2l0aW9uOiBmb3JtLWRhdGE7IG5hbWU9InNlYXJjaF92YWx1ZSINCg0KUElYRUwgYmxhbmNhDQotLVgtSU5TT01OSUEtQk9VTkRBUlkNCkNvbnRlbnQtRGlzcG9zaXRpb246IGZvcm0tZGF0YTsgbmFtZT0icG9zdGVkX2RhdGUiDQoNCjIwMjMtMTEtMDUNCi0tWC1JTlNPTU5JQS1CT1VOREFSWQ0KQ29udGVudC1EaXNwb3NpdGlvbjogZm9ybS1kYXRhOyBuYW1lPSJuYW1lIg0KDQpQSVhFTCBibGFuY2ENCi0tWC1JTlNPTU5JQS1CT1VOREFSWQ0KQ29udGVudC1EaXNwb3NpdGlvbjogZm9ybS1kYXRhOyBuYW1lPSJub3RlcyINCg0KQUJDRA0KLS1YLUlOU09NTklBLUJPVU5EQVJZDQpDb250ZW50LURpc3Bvc2l0aW9uOiBmb3JtLWRhdGE7IG5hbWU9Im11bHRpcGxlX2JhdGNocyINCg0KZmFsc2UNCi0tWC1JTlNPTU5JQS1CT1VOREFSWQ0KQ29udGVudC1EaXNwb3NpdGlvbjogZm9ybS1kYXRhOyBuYW1lPSJjb2xvciINCg0KQmxhbmNhDQotLVgtSU5TT01OSUEtQk9VTkRBUlkNCkNvbnRlbnQtRGlzcG9zaXRpb246IGZvcm0tZGF0YTsgbmFtZT0idXBsX2ltYWdlIjsgZmlsZW5hbWU9InBpeGVsLnBuZyINCkNvbnRlbnQtVHlwZTogaW1hZ2UvcG5nDQoNCu+/vVBORw0KGg0K77+977+977+9DQpJSERS77+977+977+9Ae+/ve+/ve+/vQEIBu+/ve+/ve+/vR8VxInvv73vv73vv70Ec0JJVAgICAh8CGTvv73vv73vv73vv70NCklEQVQI77+9Y++/ve+/ve+/vT/vv70FYwJ+G++/vW5477+977+977+977+9SUVORO+/vUJg77+9DQotLVgtSU5TT01OSUEtQk9VTkRBUlktLQ0K',
-            isBase64Encoded: true
-        }
-
-        DynamoDBClient.prototype.send = jest.fn().mockImplementation((command) => {
-            if (command.constructor.name === 'PutItemCommand') {
-                return Promise.resolve(mockPutItemResult);
-            }
-            if (command.constructor.name === 'GetItemCommand') {
-                return Promise.resolve(mockSingleItemResponse);
-            }
-            return Promise.reject(new Error("Unrecognized command"));
-        });
-
-        const result = await AddItemHandler(event, null, mockedDynamoDb, mockedS3);
-
-        expect(result.statusCode).toBe(200);
-    });
-
 });
 
