@@ -1,6 +1,7 @@
 const { PutItemCommand, GetItemCommand } = require("@aws-sdk/client-dynamodb");
 const { PutObjectCommand } = require("@aws-sdk/client-s3");
 const fs = require('fs');
+const Joi = require('joi');
 
 const multiPartParser = require('./multipart-form-parser');
 const { marshall, unmarshall } = require("@aws-sdk/util-dynamodb");
@@ -29,6 +30,16 @@ exports.updateItem = async (id, event, dynamoDBClient, s3Client) => {
 	else
 		parsedFields = JSON.parse(event.body);
 
+	const schemaValidated = validateSchema(parsedFields);
+
+	if (!schemaValidated.result) {
+		return {
+			statusCode: 400,
+			body: JSON.stringify(schemaValidated.details),
+			headers
+		};
+	}
+
 	const AP_TABLE = process.env.AP_TABLE;
 	//This is the URL where the images are hosted. In this case is a CF distribution
 	const CDN_IMAGES = process.env.CDN_IMAGES;
@@ -41,6 +52,8 @@ exports.updateItem = async (id, event, dynamoDBClient, s3Client) => {
 
 	if (uploadedLabKey != null)
 		parsedFields.lab_image = "/" + uploadedLabKey;
+
+	console.log(parsedFields);
 
 	const itemToSave = {
 		id: id,
@@ -164,5 +177,51 @@ function parseNumber(value) {
 }
 
 function parseBoolean(value) {
-	return (value != "");
+	if (value?.toLowerCase() == 'true') return true
+
+	return false;
+}
+
+//Retorna un objecto formato { result: true/false, details: detalle del error si true }
+function validateSchema(params) {
+
+	// Define the schema for the file object
+	const imageSchema = Joi.object({
+		filename: Joi.string().trim().required(),
+		contentType: Joi.string().valid('image/png', 'image/jpeg', 'image/gif').required(),
+		path: Joi.string().trim().required()
+	}).optional();
+
+	// Schema definition
+	const schema = Joi.object({
+		id: Joi.string().guid({
+			version: [
+				'uuidv4',
+				'uuidv5'
+			]
+		}),
+		published: Joi.string().min(1).max(1).required(),
+		ap_url: Joi.string().uri().required(),
+		lab_url: Joi.string().uri(),
+		load: Joi.number().optional(),
+		posted_date: Joi.date().required(),
+		name: Joi.string().required(),
+		substance: Joi.number().optional(),
+		image: Joi.string().optional(),
+		notes: Joi.string().optional(),
+		multiple_batchs: Joi.boolean(),
+		lab_image: Joi.string().optional(),
+		warning: Joi.number().optional(),
+		color: Joi.string().required(),
+		upl_image: imageSchema,
+		upl_lab: imageSchema
+	});
+
+	const { error, value } = schema.validate(params);
+
+	if (error) {
+		return { result: false, details: error.details };
+	}
+
+	return { result: true };
 }

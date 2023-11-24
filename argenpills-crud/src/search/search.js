@@ -1,4 +1,4 @@
-const { DynamoDBClient, QueryCommand, ScanCommand, GetItemCommand } = require("@aws-sdk/client-dynamodb");
+const { DynamoDBClient, ScanCommand, GetItemCommand } = require("@aws-sdk/client-dynamodb");
 const { marshall, unmarshall } = require('@aws-sdk/util-dynamodb');
 
 exports.Testeablehandler = async (event, context, client) => {
@@ -83,15 +83,15 @@ exports.Testeablehandler = async (event, context, client) => {
 			}
 
 			const command = new ScanCommand(params)
-			body = await client.send(command);
+			const { Items, Count, LastEvaluatedKey } = await client.send(command);
+
+			const results = Items.map(unmarshall);
 
 			//set the total items
-			headers["X-Total-Count"] = body.Count;
-
-			body = body.Items.map(item => unmarshall(item));
+			headers["X-Total-Count"] = Count;
 
 			//Prefix the items URL with the CDN, just to make it simpler to display
-			body = body.map(row => {
+			body = results.map(row => {
 				if (row.image)
 					row.image = CDN_IMAGES + row.image;
 
@@ -104,7 +104,10 @@ exports.Testeablehandler = async (event, context, client) => {
 			return {
 				headers,
 				statusCode: 200,
-				body: JSON.stringify(body)
+				body: JSON.stringify({
+					data: body,
+					LastEvaluatedKey: (Count === 0 ? null : LastEvaluatedKey)
+				})
 			};
 		}
 	}
