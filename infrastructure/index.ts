@@ -50,8 +50,8 @@ const routes = [
     { path: "/refreshtoken", method: "POST", lambda: lambdafnAuthRefreshToken, name: "RefreshToken", authenticate: true },
     { path: "/items/{id}", method: "DELETE", lambda: lambdaFnDeleteItem, name: "DeleteItem", authenticate: true },
     { path: "/dashboard", method: "GET", lambda: lambdaFnDashboard, name: "Dashboard", authenticate: false },
-    { path: "/items/{id}", method: "POST", lambda: lambdaFnEdit, name: "EditItem", authenticate: true },
-    { path: "/items", method: "PUT", lambda: lambdaFnAdd, name: "AddItem", authenticate: true },
+    { path: "/items/{id}", method: "PUT", lambda: lambdaFnEdit, name: "EditItem", authenticate: true },
+    { path: "/items", method: "POST", lambda: lambdaFnAdd, name: "AddItem", authenticate: true },
 ]
 
 const customAuthorizer = new aws.apigatewayv2.Authorizer("CognitoAuhorizer", {

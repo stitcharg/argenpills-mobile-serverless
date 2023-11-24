@@ -185,9 +185,11 @@ export const lambdaFnEdit = new aws.lambda.Function(FN_EDIT, {
     description: "AP CRUD: Edita un item",
     handler: "edititem/edititem.handler",
     runtime: aws.lambda.Runtime.NodeJS18dX,
+    memorySize: 512,
     code: new pulumi.asset.AssetArchive({
         edititem: new pulumi.asset.FileArchive("../argenpills-crud/src/edititem"),
-        lib: new pulumi.asset.FileArchive("../argenpills-crud/src/lib")
+        lib: new pulumi.asset.FileArchive("../argenpills-crud/src/lib"),
+        node_modules: new pulumi.asset.FileArchive("../node_modules")
     }),
     environment: {
         variables: {
@@ -213,10 +215,12 @@ export const lambdaFnAdd = new aws.lambda.Function(FN_ADD, {
     role: lambdaRole.arn,
     description: "AP CRUD: Agrega un item",
     handler: "additem/additem.handler",
+    memorySize: 512,
     runtime: aws.lambda.Runtime.NodeJS18dX,
     code: new pulumi.asset.AssetArchive({
         additem: new pulumi.asset.FileArchive("../argenpills-crud/src/additem"),
-        lib: new pulumi.asset.FileArchive("../argenpills-crud/src/lib")
+        lib: new pulumi.asset.FileArchive("../argenpills-crud/src/lib"),
+        node_modules: new pulumi.asset.FileArchive("../node_modules")
     }),
     environment: {
         variables: {
