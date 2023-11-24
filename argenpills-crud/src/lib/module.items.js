@@ -171,7 +171,7 @@ const UploadImage = async function (s3Client, imageToUpload, prefix) {
 }
 
 function parseNumber(value) {
-	if (value || value == "" || value == null) return undefined;
+	if (!value || value === "" || value === null) return undefined;
 
 	return parseInt(value);
 }
