@@ -3,9 +3,11 @@ import * as aws from "@pulumi/aws";
 
 import { lambdaRole } from './roles';
 import dynamoTable from "./dynamodb";
-import { CDN_IMAGES } from "./consts";
 import { APuserPool, APuserPoolClient } from "./cognito";
 import { publicImagesBucket } from "./public-images-bucket";
+
+const config = new pulumi.Config();
+const configImagesDomain = config.require("images");
 
 //GET ITEM
 const FN_GETITEM = "argenpills-crud-getitem";
@@ -18,7 +20,7 @@ export const lambdaFnGetItem = new aws.lambda.Function(FN_GETITEM, {
     environment: {
         variables: {
             "AP_TABLE": dynamoTable.name,
-            "CDN_IMAGES": CDN_IMAGES
+            "CDN_IMAGES": configImagesDomain
         }
     }
 });
@@ -91,7 +93,7 @@ export const lambdaFnGetItems = new aws.lambda.Function(FN_GETITEMS, {
     environment: {
         variables: {
             "AP_TABLE": dynamoTable.name,
-            "CDN_IMAGES": CDN_IMAGES
+            "CDN_IMAGES": configImagesDomain
         }
     }
 });
@@ -140,7 +142,7 @@ export const lambdaFnSearch = new aws.lambda.Function(FN_SEARCH, {
     environment: {
         variables: {
             "AP_TABLE": dynamoTable.name,
-            "CDN_IMAGES": CDN_IMAGES
+            "CDN_IMAGES": configImagesDomain
         }
     }
 });
@@ -194,7 +196,7 @@ export const lambdaFnEdit = new aws.lambda.Function(FN_EDIT, {
     environment: {
         variables: {
             "AP_TABLE": dynamoTable.name,
-            "CDN_IMAGES": CDN_IMAGES,
+            "CDN_IMAGES": configImagesDomain,
             "S3_BUCKET": publicImagesBucket.id
         }
     }
@@ -225,7 +227,7 @@ export const lambdaFnAdd = new aws.lambda.Function(FN_ADD, {
     environment: {
         variables: {
             "AP_TABLE": dynamoTable.name,
-            "CDN_IMAGES": CDN_IMAGES,
+            "CDN_IMAGES": configImagesDomain,
             "S3_BUCKET": publicImagesBucket.id
         }
     }
