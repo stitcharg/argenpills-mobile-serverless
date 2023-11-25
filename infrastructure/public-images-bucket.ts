@@ -2,8 +2,12 @@ import * as aws from "@pulumi/aws";
 import * as pulumi from "@pulumi/pulumi";
 import { certificate } from "./certificates";
 
+const config = new pulumi.Config();
+const configImagesDomain = config.require("api");
+const configZoneDomain = config.require("zone");
+
 const bucket = new aws.s3.Bucket("argenpills-public-images", {
-    bucket: "images.sanbox.argenpills.info",  // Explicit bucket name here
+    bucket: configImagesDomain,  // Explicit bucket name here
     acl: "private", // Make it private so only CloudFront can access it
     serverSideEncryptionConfiguration: {
         rule: {
@@ -77,7 +81,7 @@ const cdn = new aws.cloudfront.Distribution("argenpills-images", {
         },
     },
     aliases: [
-        "images.sandbox.argenpills.info"
+        configImagesDomain
     ],
     isIpv6Enabled: true,
     priceClass: "PriceClass_100",
@@ -88,7 +92,7 @@ const cdn = new aws.cloudfront.Distribution("argenpills-images", {
     },
 });
 
-const hostedZoneId = aws.route53.getZone({ name: "sandbox.argenpills.info." }, { async: true }).then(zone => zone.zoneId);
+const hostedZoneId = aws.route53.getZone({ name: `${configZoneDomain}.` }, { async: true }).then(zone => zone.zoneId);
 
 // Create a DNS record for images.sandbox.domain.com to point to the CloudFront distribution
 const cdnRecord = hostedZoneId.then(zoneId => new aws.route53.Record("cdnRecord", {

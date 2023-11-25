@@ -1,8 +1,6 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as aws from "@pulumi/aws";
-
-import { CDN_IMAGES, API_HOSTNAME } from './consts'
-
+import { ENV_DEV, ENV_PROD } from './consts'
 import { APuserPool, APuserPoolClient } from "./cognito";
 import { CWAPILogs, CWLambdaLogs } from "./logs";
 import { imagesCDN, publicImagesBucket } from './public-images-bucket';
@@ -20,6 +18,10 @@ import {
     lambdaFnEdit,
     lambdaFnAdd
 } from './lambdafunctions';
+
+// Reading configuration from files
+const config = new pulumi.Config();
+const configAPIHost = config.require("api");
 
 new aws.iam.RolePolicyAttachment("apiGatewayLoggingPolicyAttachment", {
     role: apiGatewayLoggingRole.name,
@@ -137,7 +139,7 @@ const stage = new aws.apigatewayv2.Stage("dev", {
 
 // Create a custom domain name
 const customDomain = new aws.apigatewayv2.DomainName("api-custom-domain", {
-    domainName: API_HOSTNAME,
+    domainName: configAPIHost,
 
     domainNameConfiguration: {
         certificateArn: certificateAPI.arn,
