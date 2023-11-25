@@ -1,0 +1,4 @@
+config:
+  argenpills-crud-infrastructure:api: api.argenpills.info
+  argenpills-crud-infrastructure:images: images.argenpills.info
+  argenpills-crud-infrastructure:zone: argenpills.info
