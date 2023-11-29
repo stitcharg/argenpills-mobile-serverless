@@ -1,5 +1,6 @@
 config:
-  aws:region: us-east-1
+  argenpills-crud-infrastructure:api: api.sandbox.argenpills.info
   argenpills-crud-infrastructure:images: images.sandbox.argenpills.info
   argenpills-crud-infrastructure:zone: sandbox.argenpills.info
-  argenpills-crud-infrastructure:api: api.sandbox.argenpills.info
+  aws:profile: ap_dev
+  aws:region: us-east-1
