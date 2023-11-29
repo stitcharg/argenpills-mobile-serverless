@@ -1,25 +1,38 @@
 import * as aws from "@pulumi/aws";
 import * as pulumi from "@pulumi/pulumi";
 import { certificate } from "./certificates";
+import { ENV_DEV, ENV_PROD } from './consts'
 
 const config = new pulumi.Config();
-const configImagesDomain = config.require("api");
+const configImagesDomain = config.require("images");
 const configZoneDomain = config.require("zone");
+const stack = pulumi.getStack();
 
-const bucket = new aws.s3.Bucket("argenpills-public-images", {
-    bucket: configImagesDomain,  // Explicit bucket name here
-    acl: "private", // Make it private so only CloudFront can access it
-    serverSideEncryptionConfiguration: {
-        rule: {
-            applyServerSideEncryptionByDefault: {
-                sseAlgorithm: "AES256",
+let bucket = null;
+if (stack === ENV_DEV) { 
+    bucket = new aws.s3.Bucket("argenpills-public-images", {
+        bucket: configImagesDomain,  // Explicit bucket name here
+        acl: "private", // Make it private so only CloudFront can access it
+        serverSideEncryptionConfiguration: {
+            rule: {
+                applyServerSideEncryptionByDefault: {
+                    sseAlgorithm: "AES256",
+                },
             },
         },
-    },
-    versioning: {
-        enabled: true,
-    },
-});
+        versioning: {
+            enabled: true,
+        },
+    });
+} else if (stack === ENV_PROD) {
+    bucket = new aws.s3.Bucket("argenpills-public-images", {
+        bucket: configImagesDomain
+    }, {
+        import: configImagesDomain // ARN of the existing bucket
+    });
+} else {
+    console.error("Environment is not DEV or PROD");
+}
 
 // Create an Origin Access Identity
 const originAccessIdentity = new aws.cloudfront.OriginAccessIdentity("argenpills-OAI", {
@@ -28,8 +41,8 @@ const originAccessIdentity = new aws.cloudfront.OriginAccessIdentity("argenpills
 
 // Create an S3 bucket policy to allow CloudFront to access the bucket
 const bucketPolicy = new aws.s3.BucketPolicy("policy-bucket-images", {
-    bucket: bucket.id,
-    policy: pulumi.all([bucket.arn, originAccessIdentity.iamArn]).apply(([bucketArn, oaiIamArn]) => JSON.stringify({
+    bucket: bucket!.id,
+    policy: pulumi.all([bucket!.arn, originAccessIdentity.iamArn]).apply(([bucketArn, oaiIamArn]) => JSON.stringify({
         Version: "2012-10-17",
         Statement: [
             {
@@ -47,7 +60,7 @@ const bucketPolicy = new aws.s3.BucketPolicy("policy-bucket-images", {
             }
         ]
     })),
-}, { dependsOn: [bucket] });
+}, { dependsOn: [bucket!] });
 
 // Create a CloudFront distribution
 const cdn = new aws.cloudfront.Distribution("argenpills-images", {
@@ -55,8 +68,8 @@ const cdn = new aws.cloudfront.Distribution("argenpills-images", {
     enabled: true,
     origins: [
         {
-            domainName: bucket.bucketRegionalDomainName,
-            originId: bucket.id,
+            domainName: bucket!.bucketRegionalDomainName,
+            originId: bucket!.id,
             s3OriginConfig: {
                 originAccessIdentity: originAccessIdentity.cloudfrontAccessIdentityPath,
             },
@@ -64,7 +77,7 @@ const cdn = new aws.cloudfront.Distribution("argenpills-images", {
     ],
     defaultRootObject: "index.html",
     defaultCacheBehavior: {
-        targetOriginId: bucket.id,
+        targetOriginId: bucket!.id,
         allowedMethods: ["GET", "HEAD"],
         cachedMethods: ["GET", "HEAD"],
         forwardedValues: {
