@@ -18,6 +18,7 @@ import {
     lambdaFnEdit,
     lambdaFnAdd
 } from './lambdafunctions';
+import { dashboardUrlCRUD } from './cloudwatch-dashboard';
 
 // Reading configuration from files
 const config = new pulumi.Config();
@@ -130,7 +131,7 @@ const stage = new aws.apigatewayv2.Stage("dev", {
     apiId: httpApi.id,
     name: "dev",
     deploymentId: deployment.id,
-    autoDeploy: true,
+    //autoDeploy: true,
     accessLogSettings: {
         destinationArn: CWAPILogs.arn,
         format: "$context.identity.sourceIp $context.identity.caller $context.identity.user [$context.requestTime] \"$context.httpMethod $context.resourcePath $context.protocol\" $context.status $context.responseLength $context.requestId"
@@ -166,3 +167,5 @@ export const CDNImages = imagesCDN.domainName;
 export const bucketImages = publicImagesBucket.id;
 
 export const APIHost = customDomain.domainName;
+
+export const dashboardCRUD = dashboardUrlCRUD;
