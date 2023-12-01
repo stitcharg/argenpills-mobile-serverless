@@ -97,7 +97,7 @@ exports.Testeablehandler = async (event, context, client) => {
 			statusCode: 200,
 			body: JSON.stringify({
 				data: body,
-				LastEvaluatedKey
+				LastEvaluatedKey: (LastEvaluatedKey ? LastEvaluatedKey.id.S : null)
 			})
 		};
 
