@@ -1,6 +1,0 @@
-{
-  "dependencies": {
-    "aws-sdk": "^2.1476.0",
-    "csv-parser": "^3.0.0"
-  }
-}
