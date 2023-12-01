@@ -155,7 +155,8 @@ if (stack === ENV_DEV) {
         accessLogSettings: {
             destinationArn: CWAPILogs.arn,
             format: "$context.identity.sourceIp $context.identity.caller $context.identity.user [$context.requestTime] \"$context.httpMethod $context.resourcePath $context.protocol\" $context.status $context.responseLength $context.requestId"
-        }
+        },
+        description: `Deployment at ${currentTimestamp}`,
     }, { dependsOn: allRoutes });
 } else {
     stage = new aws.apigatewayv2.Stage("v1", {
@@ -167,6 +168,7 @@ if (stack === ENV_DEV) {
             destinationArn: CWAPILogs.arn,
             format: "$context.identity.sourceIp $context.identity.caller $context.identity.user [$context.requestTime] \"$context.httpMethod $context.resourcePath $context.protocol\" $context.status $context.responseLength $context.requestId"
         },
+        description: `Deployment at ${currentTimestamp}`,
     }, { dependsOn: allRoutes });
 
     const versionMapping = new aws.apigateway.BasePathMapping("versionMapping", {
