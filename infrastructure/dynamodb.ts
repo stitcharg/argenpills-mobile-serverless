@@ -1,32 +1,83 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as aws from "@pulumi/aws";
+import { ENV_DEV, ENV_PROD } from './consts'
 
 import { lambdaRole } from "./roles";
 
-// Create a DynamoDB table
-const dynamoTable = new aws.dynamodb.Table("argenpills-pills", {
-    attributes: [
-        { name: "id", type: "S" },
-        { name: "posted_date", type: "S" },
-        { name: "published", type: "S" },
-    ],
-    hashKey: "id",
-    readCapacity: 1,
-    writeCapacity: 1,
-    globalSecondaryIndexes: [
+const stack = pulumi.getStack();
+
+let dynamoTable:aws.dynamodb.Table;
+
+if (stack === ENV_DEV) {
+    // Create a DynamoDB table
+    dynamoTable = new aws.dynamodb.Table("argenpills-pills", {
+        attributes: [
+            { name: "id", type: "S" },
+            { name: "posted_date", type: "S" },
+            { name: "published", type: "S" },
+        ],
+        hashKey: "id",
+        readCapacity: 1,
+        writeCapacity: 1,
+        globalSecondaryIndexes: [
+            {
+                name: "published-posted_date-index",
+                hashKey: "published",
+                rangeKey: "posted_date",
+                readCapacity: 1,
+                writeCapacity: 1,
+                projectionType: "ALL",
+            },
+        ],
+    },
         {
-            name: "published-posted_date-index",
+            replaceOnChanges: ["attributes"]
+        });
+
+
+} else {
+    dynamoTable = new aws.dynamodb.Table("argenpills-pills", {
+        attributes: [
+            {
+                name: "published",
+                type: "S",
+            },
+            {
+                name: "posted_date",
+                type: "S",
+            },
+            {
+                name: "id",
+                type: "S",
+            },
+        ],
+        globalSecondaryIndexes: [{
             hashKey: "published",
+            name: "published-posted_date-index",
+            projectionType: "ALL",
             rangeKey: "posted_date",
             readCapacity: 1,
             writeCapacity: 1,
-            projectionType: "ALL",
+        }],
+        hashKey: "id",
+        name: "argenpills",
+        pointInTimeRecovery: {
+            enabled: false,
         },
-    ],
-},
-    {
-        replaceOnChanges: ["attributes"]
+        readCapacity: 1,
+        streamEnabled: true,
+        streamViewType: "NEW_IMAGE",
+        tags: {
+            project: "ap",
+        },
+        ttl: {
+            attributeName: "",
+        },
+        writeCapacity: 1,
+    }, {
+        protect: true,
     });
+}
 
 // Attach DynamoDB access policy to Lambda role
 new aws.iam.RolePolicy("lambdaDynamoPolicy", {
