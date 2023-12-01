@@ -151,7 +151,7 @@ if (stack === ENV_DEV) {
         apiId: httpApi.id,
         name: "dev",
         deploymentId: deployment.id,
-        //autoDeploy: true,
+        autoDeploy: true,
         accessLogSettings: {
             destinationArn: CWAPILogs.arn,
             format: "$context.identity.sourceIp $context.identity.caller $context.identity.user [$context.requestTime] \"$context.httpMethod $context.resourcePath $context.protocol\" $context.status $context.responseLength $context.requestId"
@@ -163,20 +163,13 @@ if (stack === ENV_DEV) {
         apiId: httpApi.id,
         name: "v1",
         deploymentId: deployment.id,
-        //autoDeploy: true,
+        autoDeploy: true,
         accessLogSettings: {
             destinationArn: CWAPILogs.arn,
             format: "$context.identity.sourceIp $context.identity.caller $context.identity.user [$context.requestTime] \"$context.httpMethod $context.resourcePath $context.protocol\" $context.status $context.responseLength $context.requestId"
         },
         description: `Deployment at ${currentTimestamp}`,
     }, { dependsOn: allRoutes });
-
-    const versionMapping = new aws.apigateway.BasePathMapping("versionMapping", {
-        restApi: httpApi.id,
-        stageName: stage.name,
-        domainName: customDomain.domainName,
-        basePath: "v1"
-    });
 }
 
 // Create an API mapping that connects the custom domain name to your HTTP API
@@ -184,6 +177,7 @@ const apiMapping = new aws.apigatewayv2.ApiMapping("api-mapping", {
     apiId: httpApi.id,
     domainName: customDomain.domainName,
     stage: stage.name,
+    apiMappingKey: (stack===ENV_PROD ? "v1" : "")
 }); 
 
 
