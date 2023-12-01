@@ -5,10 +5,9 @@ import { ENV_DEV, ENV_PROD } from './consts'
 
 const config = new pulumi.Config();
 const configImagesDomain = config.require("images");
-const configZoneDomain = config.require("zone");
 const stack = pulumi.getStack();
 
-let bucket = null;
+let bucket:aws.s3.Bucket;
 if (stack === ENV_DEV) { 
     bucket = new aws.s3.Bucket("argenpills-public-images", {
         bucket: configImagesDomain,  // Explicit bucket name here
@@ -26,9 +25,31 @@ if (stack === ENV_DEV) {
     });
 } else if (stack === ENV_PROD) {
     bucket = new aws.s3.Bucket("argenpills-public-images", {
-        bucket: configImagesDomain
+        arn: "arn:aws:s3:::images.argenpills.info",
+        bucket: "images.argenpills.info",
+        corsRules: [{
+            allowedHeaders: ["*"],
+            allowedMethods: [
+                "PUT",
+                "POST",
+                "DELETE",
+            ],
+            allowedOrigins: ["*"],
+        }],
+        hostedZoneId: "Z3AQBSTGFYJSTF",
+        requestPayer: "BucketOwner",
+        serverSideEncryptionConfiguration: {
+            rule: {
+                applyServerSideEncryptionByDefault: {
+                    sseAlgorithm: "AES256",
+                },
+            },
+        },
+        versioning: {
+            enabled: true,
+        },
     }, {
-        import: configImagesDomain // ARN of the existing bucket
+        protect: true,
     });
 } else {
     console.error("Environment is not DEV or PROD");
@@ -105,16 +126,7 @@ const cdn = new aws.cloudfront.Distribution("argenpills-images", {
     },
 });
 
-const hostedZoneId = aws.route53.getZone({ name: `${configZoneDomain}.` }, { async: true }).then(zone => zone.zoneId);
 
-// Create a DNS record for images.sandbox.domain.com to point to the CloudFront distribution
-const cdnRecord = hostedZoneId.then(zoneId => new aws.route53.Record("cdnRecord", {
-    name: "images",
-    zoneId: zoneId,
-    type: "CNAME",
-    records: [cdn.domainName],
-    ttl: 300,
-}));
 
 //Export the info
 export const publicImagesBucket = bucket!;

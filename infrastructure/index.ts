@@ -1,6 +1,7 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as aws from "@pulumi/aws";
 import { ENV_DEV, ENV_PROD } from './consts'
+import { registerApiDomain } from './domains';
 import { APuserPool, APuserPoolClient } from "./cognito";
 import { CWAPILogs, CWLambdaLogs } from "./logs";
 import { imagesCDN, publicImagesBucket } from './public-images-bucket';
@@ -23,6 +24,7 @@ import { dashboardUrlCRUD } from './cloudwatch-dashboard';
 // Reading configuration from files
 const config = new pulumi.Config();
 const configAPIHost = config.require("api");
+const stack = pulumi.getStack();
 
 new aws.iam.RolePolicyAttachment("apiGatewayLoggingPolicyAttachment", {
     role: apiGatewayLoggingRole.name,
@@ -122,21 +124,11 @@ new aws.cloudwatch.LogSubscriptionFilter("argenpills-crud-debug", {
 const allRoutes = pulumi.all(routeArray);
 
 // Create a Deployment
+const currentTimestamp = new Date().toISOString();
 const deployment = new aws.apigatewayv2.Deployment("ap-crud-deploy", {
-    apiId: httpApi.id
-});
-
-// Create a Stage
-const stage = new aws.apigatewayv2.Stage("dev", {
     apiId: httpApi.id,
-    name: "dev",
-    deploymentId: deployment.id,
-    //autoDeploy: true,
-    accessLogSettings: {
-        destinationArn: CWAPILogs.arn,
-        format: "$context.identity.sourceIp $context.identity.caller $context.identity.user [$context.requestTime] \"$context.httpMethod $context.resourcePath $context.protocol\" $context.status $context.responseLength $context.requestId"
-    }
-}, { dependsOn: allRoutes });
+    description: `Deployment at ${currentTimestamp}`,
+});
 
 // Create a custom domain name
 const customDomain = new aws.apigatewayv2.DomainName("api-custom-domain", {
@@ -148,13 +140,50 @@ const customDomain = new aws.apigatewayv2.DomainName("api-custom-domain", {
         securityPolicy: "TLS_1_2",
     }
 });
+registerApiDomain(customDomain);
+
+
+let stage:aws.apigatewayv2.Stage;
+
+if (stack === ENV_DEV) {
+// Create a Stage
+    stage = new aws.apigatewayv2.Stage("dev", {
+        apiId: httpApi.id,
+        name: "dev",
+        deploymentId: deployment.id,
+        //autoDeploy: true,
+        accessLogSettings: {
+            destinationArn: CWAPILogs.arn,
+            format: "$context.identity.sourceIp $context.identity.caller $context.identity.user [$context.requestTime] \"$context.httpMethod $context.resourcePath $context.protocol\" $context.status $context.responseLength $context.requestId"
+        }
+    }, { dependsOn: allRoutes });
+} else {
+    stage = new aws.apigatewayv2.Stage("v1", {
+        apiId: httpApi.id,
+        name: "v1",
+        deploymentId: deployment.id,
+        //autoDeploy: true,
+        accessLogSettings: {
+            destinationArn: CWAPILogs.arn,
+            format: "$context.identity.sourceIp $context.identity.caller $context.identity.user [$context.requestTime] \"$context.httpMethod $context.resourcePath $context.protocol\" $context.status $context.responseLength $context.requestId"
+        },
+    }, { dependsOn: allRoutes });
+
+    const versionMapping = new aws.apigateway.BasePathMapping("versionMapping", {
+        restApi: httpApi.id,
+        stageName: stage.name,
+        domainName: customDomain.domainName,
+        basePath: "v1"
+    });
+}
 
 // Create an API mapping that connects the custom domain name to your HTTP API
 const apiMapping = new aws.apigatewayv2.ApiMapping("api-mapping", {
     apiId: httpApi.id,
     domainName: customDomain.domainName,
-    stage: stage.name
-});
+    stage: stage.name,
+}); 
+
 
 // Export 
 export const APuserPoolId = APuserPool.id;

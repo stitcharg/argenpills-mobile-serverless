@@ -7,7 +7,7 @@ import { APuserPool, APuserPoolClient } from "./cognito";
 import { publicImagesBucket } from "./public-images-bucket";
 
 const config = new pulumi.Config();
-const configImagesDomain = config.require("images");
+const configImagesDomain = `https://${config.require("images")}`;
 
 //GET ITEM
 const FN_GETITEM = "argenpills-crud-getitem";
