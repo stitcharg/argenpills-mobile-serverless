@@ -4,7 +4,7 @@ const { DynamoDBClient, ScanCommand } = require("@aws-sdk/client-dynamodb");
 exports.Testeablehandler = async (event, context, client) => {
 
     const headers = {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json; charset=utf-8",
     };
 
     const AP_TABLE = process.env.AP_TABLE;
