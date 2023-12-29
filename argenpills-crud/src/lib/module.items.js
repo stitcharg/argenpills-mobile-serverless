@@ -16,7 +16,7 @@ exports.updateItem = async (id, event, dynamoDBClient, s3Client) => {
 	let statusCode = 200;
 
 	const headers = {
-		"Content-Type": "application/json"
+		"Content-Type": "application/json; charset=utf-8"
 	};
 
 	let body;

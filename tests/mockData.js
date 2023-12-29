@@ -170,6 +170,15 @@ const mockSingleItemResponse = {
 	}
 }
 
+const mockSingleItemResponseSpecialChars = {
+	...mockSingleItemResponse,
+	"Item": {
+		"name": { "S": "Pepe éáíñ" },
+		"notes": { "S": "Acentos y éáíñ" },
+		"color": { "S": "amarillo éáíñ" },
+	}
+};
+
 const mockSearchResults = {
 	"$metadata": {
 		"httpStatusCode": 200,
@@ -775,5 +784,6 @@ module.exports = {
 	mockAllItemsData,
 	mockPagedData,
 	mockPagedDataSecondPage,
-	mockTableDescription
+	mockTableDescription,
+	mockSingleItemResponseSpecialChars
 }
