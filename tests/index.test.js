@@ -16,7 +16,8 @@ const { mockSearchResults,
 	mockDashboardColors,
 	mockPagedDataSecondPage,
 	mockPagedData,
-	mockTableDescription } = require('./mockData');
+	mockTableDescription,
+	mockSingleItemResponseSpecialChars } = require('./mockData');
 
 require('dotenv').config()
 
@@ -180,6 +181,41 @@ describe('Argenpills CRUD', () => {
 		const result = await AddItemHandler(event, null, mockedDynamoDb, mockedS3);
 
 		expect(result.statusCode).toBe(200);
+	});
+
+	it('should return added item with special characters', async () => {
+
+		const body = {
+			"published": "x",
+			"ap_url": "https://argenpills.org/showthread.php?tid=111",
+			"image": "/pills/0.jpg",
+			"notes": "Acentos y éáíñ",
+			"id": "206374e8-2a14-4d8a-a9c0-70293aa6e7db",
+			"posted_date": "2023-01-01",
+			"name": "Pepe éáíñ",
+			"color": "amarillo éáíñ"
+		};
+
+		const bodyString = JSON.stringify(body);
+
+		const event = {
+			"body": bodyString
+		};
+
+		DynamoDBClient.prototype.send = jest.fn().mockImplementation((command) => {
+			if (command.constructor.name === 'PutItemCommand') {
+				return Promise.resolve(mockPutItemResult);
+			}
+			if (command.constructor.name === 'GetItemCommand') {
+				return Promise.resolve(mockSingleItemResponseSpecialChars);
+			}
+			return Promise.reject(new Error("Unrecognized command"));
+		});
+
+		const result = await AddItemHandler(event, null, mockedDynamoDb, mockedS3);
+
+		expect(result.statusCode).toBe(200);
+		expect(body.name).toBe("Pepe éáíñ");
 	});
 
 	it('should add item without images and return added item', async () => {

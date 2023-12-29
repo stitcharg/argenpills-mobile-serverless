@@ -5,11 +5,11 @@ exports.Testeablehandler = async (event, context, client) => {
 	let body;
 
 	const headers = {
-		"Content-Type": "application/json"
+		"Content-Type": "application/json; charset=utf-8",
 	};
 
 	if (event == null || event.pathParameters?.id == null) {
-		return { 
+		return {
 			statusCode: 400,
 			body: JSON.stringify({ message: `"Mising ID Parameter"` })
 		}
@@ -21,7 +21,7 @@ exports.Testeablehandler = async (event, context, client) => {
 	const command = new GetItemCommand({
 		TableName: AP_TABLE,
 		Key: {
-			id: {S: ITEM_ID }
+			id: { S: ITEM_ID }
 		}
 	});
 

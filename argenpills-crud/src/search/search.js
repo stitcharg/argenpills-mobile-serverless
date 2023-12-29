@@ -10,7 +10,7 @@ exports.Testeablehandler = async (event, context, client) => {
 	const lastKey = event.queryStringParameters?.lastKey;
 
 	const headers = {
-		"Content-Type": "application/json",
+		"Content-Type": "application/json; charset=utf-8",
 		"X-Total-Count": totalItems
 	};
 

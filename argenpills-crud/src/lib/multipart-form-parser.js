@@ -54,7 +54,7 @@ module.exports.parse = (event) => {
     if (event.isBase64Encoded) {
         let body = clonedEvent.body;
         let decodedFromBase64 = Buffer.from(body, 'base64');
-        clonedEvent.body = decodedFromBase64.toString('latin1');
+        clonedEvent.body = decodedFromBase64.toString('utf8');
     }
     let result = multiPartParser(clonedEvent);
 
