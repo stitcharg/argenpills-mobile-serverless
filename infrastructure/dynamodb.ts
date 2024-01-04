@@ -6,7 +6,8 @@ import { lambdaRole } from "./roles";
 
 const stack = pulumi.getStack();
 
-let dynamoTable:aws.dynamodb.Table;
+let dynamoTable: aws.dynamodb.Table;
+let dynamoReferenceTable: aws.dynamodb.Table;
 
 if (stack === ENV_DEV) {
     // Create a DynamoDB table
@@ -79,10 +80,22 @@ if (stack === ENV_DEV) {
     });
 }
 
+// Create a DynamoDB table
+dynamoReferenceTable = new aws.dynamodb.Table("argenpills-pills-telegram", {
+    name: "argenpills-pills-telegram",
+    attributes: [
+        { name: "id", type: "S" }
+    ],
+    hashKey: "id",
+    readCapacity: 1,
+    writeCapacity: 1
+});
+
+
 // Attach DynamoDB access policy to Lambda role
 new aws.iam.RolePolicy("lambdaDynamoPolicy", {
     role: lambdaRole.id,
-    policy: pulumi.all([dynamoTable.arn]).apply(([tableArn]) => JSON.stringify({
+    policy: pulumi.all([dynamoTable.arn, dynamoReferenceTable.arn]).apply(([tableArn]) => JSON.stringify({
         Version: "2012-10-17",
         Statement: [{
             Action: [
@@ -103,4 +116,4 @@ new aws.iam.RolePolicy("lambdaDynamoPolicy", {
     })),
 });
 
-export default dynamoTable;
+export { dynamoTable, dynamoReferenceTable }

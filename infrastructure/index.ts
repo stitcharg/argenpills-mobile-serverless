@@ -7,7 +7,7 @@ import { CWAPILogs, CWLambdaLogs } from "./logs";
 import { imagesCDN, publicImagesBucket } from './public-images-bucket';
 import { certificateAPI } from "./certificates";
 import { apiGatewayLoggingRole } from "./roles";
-import dynamoTable from "./dynamodb";
+import { dynamoTable, dynamoReferenceTable } from "./dynamodb";
 import {
     lambdaFnGetItem,
     lambdaFnAuth,
@@ -143,10 +143,10 @@ const customDomain = new aws.apigatewayv2.DomainName("api-custom-domain", {
 registerApiDomain(customDomain);
 
 
-let stage:aws.apigatewayv2.Stage;
+let stage: aws.apigatewayv2.Stage;
 
 if (stack === ENV_DEV) {
-// Create a Stage
+    // Create a Stage
     stage = new aws.apigatewayv2.Stage("dev", {
         apiId: httpApi.id,
         name: "dev",
@@ -177,8 +177,8 @@ const apiMapping = new aws.apigatewayv2.ApiMapping("api-mapping", {
     apiId: httpApi.id,
     domainName: customDomain.domainName,
     stage: stage.name,
-    apiMappingKey: (stack===ENV_PROD ? "v1" : "")
-}); 
+    apiMappingKey: (stack === ENV_PROD ? "v1" : "")
+});
 
 
 // Export 
@@ -186,6 +186,7 @@ export const APuserPoolId = APuserPool.id;
 export const APuserPoolClientId = APuserPoolClient.id;
 
 export const tableName = dynamoTable.name;
+export const tableTelegramReference = dynamoReferenceTable.name;
 export const apiUrl = stage.invokeUrl;
 
 export const CDNImages = imagesCDN.domainName;
