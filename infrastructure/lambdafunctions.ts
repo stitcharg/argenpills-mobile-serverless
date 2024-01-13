@@ -2,7 +2,7 @@ import * as pulumi from "@pulumi/pulumi";
 import * as aws from "@pulumi/aws";
 
 import { lambdaRole } from './roles';
-import dynamoTable from "./dynamodb";
+import { dynamoTable } from "./dynamodb";
 import { APuserPool, APuserPoolClient } from "./cognito";
 import { publicImagesBucket } from "./public-images-bucket";
 
