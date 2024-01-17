@@ -31,6 +31,8 @@ if (stack === ENV_DEV) {
 				projectionType: "ALL",
 			},
 		],
+		streamEnabled: true,
+		streamViewType: "NEW_AND_OLD_IMAGES"
 	},
 		{
 			replaceOnChanges: ["attributes"]
@@ -95,12 +97,22 @@ dynamoSearchTable = new aws.dynamodb.Table("argenpills-pills-search", {
 	name: "argenpills-pills-search",
 	attributes: [
 		{ name: "word", type: "S" },
-		{ name: "id", type: "S" }
+		{ name: "id", type: "S" },
+		{ name: "posted_date", type: "S" }
 	],
 	hashKey: "id",
 	rangeKey: "word",
 	readCapacity: 1,
-	writeCapacity: 1
+	writeCapacity: 1,
+	globalSecondaryIndexes: [{
+		hashKey: "word",
+		rangeKey: "posted_date",
+		name: "word-index",
+		nonKeyAttributes: ["record"],
+		projectionType: "INCLUDE",
+		readCapacity: 1,
+		writeCapacity: 1,
+	}],
 });
 
 
