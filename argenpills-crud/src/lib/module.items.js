@@ -2,14 +2,13 @@ const { PutItemCommand, GetItemCommand } = require("@aws-sdk/client-dynamodb");
 const { PutObjectCommand } = require("@aws-sdk/client-s3");
 const fs = require('fs');
 const Joi = require('joi');
+const Busboy = require('busboy');
+const path = require('path');
 
-const multiPartParser = require('./multipart-form-parser');
 const { marshall, unmarshall } = require("@aws-sdk/util-dynamodb");
 
 const UPL_IMAGE = 1;
 const UPL_TEST = 2;
-
-//https://livefiredev.com/aws-lambda-how-to-access-post-parameters-nodejs/
 
 // This method is both to create and update
 exports.updateItem = async (id, event, dynamoDBClient, s3Client) => {
@@ -20,15 +19,12 @@ exports.updateItem = async (id, event, dynamoDBClient, s3Client) => {
 	};
 
 	let body;
-	let parsedFields;
 
 	//uncomment this if you want to debug the payload in cw
 	//console.log("event", event);
 
-	if (event.isBase64Encoded)
-		parsedFields = multiPartParser.parse(event);
-	else
-		parsedFields = JSON.parse(event.body);
+	// Parse multipart/form-data
+	const parsedFields = await parseMultipartFormData(event);
 
 	const schemaValidated = validateSchema(parsedFields);
 
@@ -53,7 +49,7 @@ exports.updateItem = async (id, event, dynamoDBClient, s3Client) => {
 	if (uploadedLabKey != null)
 		parsedFields.lab_image = "/" + uploadedLabKey;
 
-	console.log(parsedFields);
+	//console.log("parsedFields", parsedFields);
 
 	const itemToSave = {
 		id: id,
@@ -73,7 +69,7 @@ exports.updateItem = async (id, event, dynamoDBClient, s3Client) => {
 		published: parsedFields.published
 	};
 
-	console.log(itemToSave);
+	//console.log("itemtosave", itemToSave);
 
 	const putCommand = new PutItemCommand({
 		TableName: AP_TABLE,
@@ -145,7 +141,7 @@ const UploadImage = async function (s3Client, imageToUpload, prefix) {
 	console.log("Upload full bucket path:", fullBucketPath);
 
 	try {
-		let binaryFile = fs.readFileSync(imageToUpload.path);
+		let binaryFile = fs.readFileSync(imageToUpload.filePath);
 
 		let uploadParams =
 		{
@@ -189,7 +185,7 @@ function validateSchema(params) {
 	const imageSchema = Joi.object({
 		filename: Joi.string().trim().required(),
 		contentType: Joi.string().valid('image/png', 'image/jpeg', 'image/gif').required(),
-		path: Joi.string().trim().required()
+		filePath: Joi.string().trim().required()
 	}).optional();
 
 	// Schema definition
@@ -224,4 +220,63 @@ function validateSchema(params) {
 	}
 
 	return { result: true };
+}
+
+async function parseMultipartFormData(event) {
+	return new Promise((resolve, reject) => {
+		const busboy = Busboy({ headers: event.headers });
+		const result = {};
+		const filePromises = [];
+
+		busboy.on('file', (fieldname, file, filename) => {
+			if ((fieldname === 'upl_image' || fieldname === 'upl_lab') && filename) {
+				const mimeType = filename.mimeType;
+
+				const filePath = path.join('/tmp', filename.filename);
+				const writeStream = fs.createWriteStream(filePath);
+
+				const filePromise = new Promise((resolveFile, rejectFile) => {
+					file.pipe(writeStream);
+
+					writeStream.on('finish', () => {
+						console.log(`File ${filename.filename} has been written to ${filePath}`);
+						result[fieldname] = {
+							filename: filename.filename,
+							filePath: filePath,
+							contentType: mimeType
+						};
+						resolveFile();
+					});
+
+					writeStream.on('error', (error) => {
+						rejectFile(error);
+					});
+				});
+
+				filePromises.push(filePromise);
+				file.on('end', () => writeStream.end());
+			} else {
+				file.resume();
+			}
+		});
+
+		busboy.on('field', (fieldname, val) => {
+			result[fieldname] = val;
+		});
+
+		busboy.on('finish', () => {
+			// Wait for all file handling promises to complete
+			Promise.all(filePromises).then(() => {
+				resolve(result);
+			}).catch(reject);
+		});
+
+		busboy.on('error', reject);
+
+		if (event.isBase64Encoded) {
+			busboy.end(Buffer.from(event.body, 'base64'));
+		} else {
+			busboy.end(event.body);
+		}
+	});
 }

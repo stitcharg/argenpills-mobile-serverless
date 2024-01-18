@@ -4,7 +4,9 @@
     "@aws-sdk/client-s3": "^3.438.0",
     "@aws-sdk/util-dynamodb": "^3.428.0",
     "aws-sdk": "^2.1473.0",
+    "busboy": "^1.6.0",
     "dotenv": "^16.3.1",
-    "joi": "^17.11.0"
+    "joi": "^17.11.0",
+    "lambda-local": "^2.1.2"
   }
 }
