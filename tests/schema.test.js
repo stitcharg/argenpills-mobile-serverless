@@ -28,6 +28,7 @@ const mockedS3 = new S3Client({});
 
 const CDN_IMAGES = process.env.CDN_IMAGES;
 
+
 describe('Argenpills CRUD (Schema tests)', () => {
     beforeEach(() => {
         DynamoDBClient.prototype.send.mockReset();
@@ -35,14 +36,19 @@ describe('Argenpills CRUD (Schema tests)', () => {
 
     it('should return schema error when invalid payload', async () => {
 
-        const body = {
-            payload: "x"
+        const boundary = '----TestBoundary';
+        const fields = {
+            'published': 'x',
         };
 
-        const bodyString = JSON.stringify(body);
+        const multipartBody = createMultipartBody(fields, boundary);
 
         const event = {
-            "body": bodyString
+            "body": multipartBody,
+            "isBase64Encoded": false,
+            "headers": {
+                'content-type': `multipart/form-data; boundary=${boundary}`
+            }
         };
 
         const result = await AddItemHandler(event, null, mockedDynamoDb, mockedS3);
@@ -53,7 +59,8 @@ describe('Argenpills CRUD (Schema tests)', () => {
 
     it('should return schema error when wrong url is sent in payload', async () => {
 
-        const body = {
+        const boundary = '----TestBoundary';
+        const fields = {
             "published": "x",
             "ap_url": "invalid",
             "image": "/pills/0.jpg",
@@ -65,10 +72,14 @@ describe('Argenpills CRUD (Schema tests)', () => {
             "color": "amarillo"
         };
 
-        const bodyString = JSON.stringify(body);
+        const multipartBody = createMultipartBody(fields, boundary);
 
         const event = {
-            "body": bodyString
+            "body": multipartBody,
+            "isBase64Encoded": false,
+            "headers": {
+                'content-type': `multipart/form-data; boundary=${boundary}`
+            }
         };
 
         const result = await AddItemHandler(event, null, mockedDynamoDb, mockedS3);
@@ -83,7 +94,8 @@ describe('Argenpills CRUD (Schema tests)', () => {
 
     it('should return schema error when missing published in payload', async () => {
 
-        const body = {
+        const boundary = '----TestBoundary';
+        const fields = {
             "ap_url": "invalid",
             "image": "/pills/0.jpg",
             "search_value": "pepe amarillo",
@@ -94,10 +106,14 @@ describe('Argenpills CRUD (Schema tests)', () => {
             "color": "amarillo"
         };
 
-        const bodyString = JSON.stringify(body);
+        const multipartBody = createMultipartBody(fields, boundary);
 
         const event = {
-            "body": bodyString
+            "body": multipartBody,
+            "isBase64Encoded": false,
+            "headers": {
+                'content-type': `multipart/form-data; boundary=${boundary}`
+            }
         };
 
         const result = await AddItemHandler(event, null, mockedDynamoDb, mockedS3);
@@ -113,3 +129,15 @@ describe('Argenpills CRUD (Schema tests)', () => {
     });
 });
 
+function createMultipartBody(fields, boundary) {
+    let body = '';
+
+    for (const [name, value] of Object.entries(fields)) {
+        body += `--${boundary}\r\n`;
+        body += `Content-Disposition: form-data; name="${name}"\r\n\r\n`;
+        body += `${value}\r\n`;
+    }
+
+    body += `--${boundary}--\r\n`;
+    return body;
+}
