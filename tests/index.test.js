@@ -151,7 +151,8 @@ describe('Argenpills CRUD', () => {
 
 	it('should return added item', async () => {
 
-		const body = {
+		const boundary = '----TestBoundary';
+		const fields = {
 			"published": "x",
 			"ap_url": "https://argenpills.org/showthread.php?tid=111",
 			"image": "/pills/0.jpg",
@@ -162,10 +163,14 @@ describe('Argenpills CRUD', () => {
 			"color": "amarillo"
 		};
 
-		const bodyString = JSON.stringify(body);
+		const multipartBody = createMultipartBody(fields, boundary);
 
 		const event = {
-			"body": bodyString
+			"body": multipartBody,
+			"isBase64Encoded": false,
+			"headers": {
+				'content-type': `multipart/form-data; boundary=${boundary}`
+			}
 		};
 
 		DynamoDBClient.prototype.send = jest.fn().mockImplementation((command) => {
@@ -185,7 +190,8 @@ describe('Argenpills CRUD', () => {
 
 	it('should return added item with special characters', async () => {
 
-		const body = {
+		const boundary = '----TestBoundary';
+		const fields = {
 			"published": "x",
 			"ap_url": "https://argenpills.org/showthread.php?tid=111",
 			"image": "/pills/0.jpg",
@@ -196,10 +202,14 @@ describe('Argenpills CRUD', () => {
 			"color": "amarillo éáíñ"
 		};
 
-		const bodyString = JSON.stringify(body);
+		const multipartBody = createMultipartBody(fields, boundary);
 
 		const event = {
-			"body": bodyString
+			"body": multipartBody,
+			"isBase64Encoded": false,
+			"headers": {
+				'content-type': `multipart/form-data; boundary=${boundary}`
+			}
 		};
 
 		DynamoDBClient.prototype.send = jest.fn().mockImplementation((command) => {
@@ -215,12 +225,15 @@ describe('Argenpills CRUD', () => {
 		const result = await AddItemHandler(event, null, mockedDynamoDb, mockedS3);
 
 		expect(result.statusCode).toBe(200);
-		expect(body.name).toBe("Pepe éáíñ");
+
+		const answer = JSON.parse(result.body);
+		expect(answer.name).toBe("Pepe éáíñ");
 	});
 
 	it('should add item without images and return added item', async () => {
 
-		const body = {
+		const boundary = '----TestBoundary';
+		const fields = {
 			"published": "x",
 			"ap_url": "https://argenpills.org/showthread.php?tid=111",
 			"image": "/pills/0.jpg",
@@ -231,11 +244,14 @@ describe('Argenpills CRUD', () => {
 			"color": "amarillo"
 		};
 
-		const bodyString = JSON.stringify(body);
+		const multipartBody = createMultipartBody(fields, boundary);
 
 		const event = {
-			"body": bodyString,
-			"isBase64Encoded": false
+			"body": multipartBody,
+			"isBase64Encoded": false,
+			"headers": {
+				'content-type': `multipart/form-data; boundary=${boundary}`
+			}
 		};
 
 		DynamoDBClient.prototype.send = jest.fn().mockImplementation((command) => {
@@ -286,7 +302,8 @@ describe('Argenpills CRUD', () => {
 
 		const ID = "996374e8-2a14-4d8a-a9c0-70293aa6e7db";
 
-		const body = {
+		const boundary = '----TestBoundary';
+		const fields = {
 			"published": "x",
 			"ap_url": "https://argenpills.org/showthread.php?tid=111",
 			"image": "/pills/0.jpg",
@@ -297,17 +314,21 @@ describe('Argenpills CRUD', () => {
 			"color": "amarillo"
 		};
 
-		var mockedEditedItem = mockSingleItemResponse;
-		mockedEditedItem.Item.id = { S: ID };
-
-		const bodyString = JSON.stringify(body);
+		const multipartBody = createMultipartBody(fields, boundary);
 
 		const event = {
-			pathParameters: {
+			"pathParameters": {
 				id: "996374e8-2a14-4d8a-a9c0-70293aa6e7db"
 			},
-			"body": bodyString
+			"body": multipartBody,
+			"isBase64Encoded": false,
+			"headers": {
+				'content-type': `multipart/form-data; boundary=${boundary}`
+			}
 		};
+
+		var mockedEditedItem = mockSingleItemResponse;
+		mockedEditedItem.Item.id = { S: ID };
 
 		DynamoDBClient.prototype.send = jest.fn().mockImplementation((command) => {
 			if (command.constructor.name === 'PutItemCommand') {
@@ -507,3 +528,16 @@ describe('Argenpills CRUD', () => {
 
 });
 
+
+function createMultipartBody(fields, boundary) {
+	let body = '';
+
+	for (const [name, value] of Object.entries(fields)) {
+		body += `--${boundary}\r\n`;
+		body += `Content-Disposition: form-data; name="${name}"\r\n\r\n`;
+		body += `${value}\r\n`;
+	}
+
+	body += `--${boundary}--\r\n`;
+	return body;
+}
