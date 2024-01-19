@@ -1,5 +1,5 @@
-const { DynamoDBClient, ScanCommand, GetItemCommand } = require("@aws-sdk/client-dynamodb");
-const { marshall, unmarshall } = require('@aws-sdk/util-dynamodb');
+const { DynamoDBClient, GetItemCommand, QueryCommand } = require("@aws-sdk/client-dynamodb");
+const { unmarshall } = require('@aws-sdk/util-dynamodb');
 
 exports.Testeablehandler = async (event, context, client) => {
 	let body;
@@ -35,14 +35,16 @@ exports.Testeablehandler = async (event, context, client) => {
 
 			const params = {
 				TableName: AP_TABLE,
-				IndexName: "published-posted_date-index",
-				FilterExpression: "contains(search_value, :c) and published = :published",
+				IndexName: "word-index",
+				KeyConditionExpression: "word = :c",
 				ExpressionAttributeValues: {
-					":published": { S: 'x' },
 					":c": { S: search.toLowerCase() }
 				},
-				Limit: pageSize
+				Limit: pageSize,
+				ScanIndexForward: false
 			};
+
+			console.log(params);
 
 			// Add the ExclusiveStartKey using lastKey for pagination
 			if (lastKey) {
@@ -82,10 +84,19 @@ exports.Testeablehandler = async (event, context, client) => {
 				}
 			}
 
-			const command = new ScanCommand(params)
+			const command = new QueryCommand(params)
+
+			//TODO: revisar la paginacion, porque creo que con el nuevo indice no anda bien. Pero por ahora zafa
 			const { Items, Count, LastEvaluatedKey } = await client.send(command);
 
-			const results = Items.map(unmarshall);
+			const searchResults = Items.map(unmarshall);
+
+			results = searchResults.map(item => {
+				// Assuming 'record' is a string attribute in your DynamoDB items
+				return JSON.parse(item.record);
+			});
+
+			console.log(results);
 
 			//set the total items
 			headers["X-Total-Count"] = Count;
