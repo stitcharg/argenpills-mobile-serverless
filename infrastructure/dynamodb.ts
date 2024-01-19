@@ -119,9 +119,11 @@ dynamoSearchTable = new aws.dynamodb.Table("argenpills-pills-search", {
 // Attach DynamoDB access policy to Lambda role
 new aws.iam.RolePolicy("lambdaDynamoPolicy", {
 	role: lambdaRole.id,
-	policy: pulumi.all([dynamoTable.arn,
-	dynamoReferenceTable.arn,
-	dynamoSearchTable.arn]).apply(([tableArn]) => JSON.stringify({
+	policy: pulumi.all(
+		[dynamoTable.arn,
+		dynamoReferenceTable.arn,
+		dynamoSearchTable.arn]
+	).apply(([pillTableArn, pillTelegramReferenceTable, pillSearchTable]) => JSON.stringify({
 		Version: "2012-10-17",
 		Statement: [{
 			Action: [
@@ -135,8 +137,12 @@ new aws.iam.RolePolicy("lambdaDynamoPolicy", {
 			],
 			Effect: "Allow",
 			Resource: [
-				tableArn,
-				`${tableArn}/index/*`
+				pillTableArn,
+				`${pillTableArn}/index/*`,
+				pillTelegramReferenceTable,
+				`${pillTelegramReferenceTable}/index/*`,
+				pillSearchTable,
+				`${pillSearchTable}/index/*`,
 			],
 		}],
 	})),

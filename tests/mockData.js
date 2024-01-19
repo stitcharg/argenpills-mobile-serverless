@@ -774,6 +774,29 @@ const mockTableDescription = {
 	}
 };
 
+const mockSearchTableSample = {
+	'$metadata': {
+		"httpStatusCode": 200,
+		"requestId": '2B4FP9BMCILC7IBBBDNFP2BF1FVV4KQNSO5AEMVJF66Q9ASUAAJG',
+		"extendedRequestId": undefined,
+		"cfId": undefined,
+		"attempts": 1,
+		"totalRetryDelay": 0
+	},
+	"Count": 1,
+	"Items": [
+		{
+			"id": { "S": "49cf7362-84a9-4213-bc73-114edc1cb888" },
+			"word": { "S": "amarilla" },
+			"posted_date": { "S": "2021-12-08" },
+			"record": {
+				"S":
+					"{\"published\":\"x\",\"ap_url\":\"https://argenpills.org/showthread.php?tid=5931\",\"image\":\"/pills/2669162.jpg\",\"posted_date\":\"2021-12-08\",\"id\":\"49cf7362-84a9-4213-bc73-114edc1cb888\",\"name\":\"Bitcoin\",\"color\":\"Amarilla\",\"substance\":1,\"load\":1,\"warning\":1,\"notes\":\"L\u00EDnea divisoria atr\u00E1s. Al parecer hay dos tandas. La que tiene Marquis hecho no pareciera poseer MDMA.\"}"
+			}
+		}
+	]
+}
+
 module.exports = {
 	mockGetItemsResponse,
 	mockSearchResults,
@@ -785,5 +808,6 @@ module.exports = {
 	mockPagedData,
 	mockPagedDataSecondPage,
 	mockTableDescription,
-	mockSingleItemResponseSpecialChars
+	mockSingleItemResponseSpecialChars,
+	mockSearchTableSample
 }

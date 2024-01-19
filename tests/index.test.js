@@ -17,7 +17,8 @@ const { mockSearchResults,
 	mockPagedDataSecondPage,
 	mockPagedData,
 	mockTableDescription,
-	mockSingleItemResponseSpecialChars } = require('./mockData');
+	mockSingleItemResponseSpecialChars,
+	mockSearchTableSample } = require('./mockData');
 
 require('dotenv').config()
 
@@ -113,8 +114,8 @@ describe('Argenpills CRUD', () => {
 			if (command.constructor.name === 'GetItemCommand') {
 				return Promise.resolve(lastItem);
 			}
-			if (command.constructor.name === 'ScanCommand') {
-				return Promise.resolve(mockPagedData);
+			if (command.constructor.name === 'QueryCommand') {
+				return Promise.resolve(mockSearchTableSample);
 			}
 			return Promise.reject(new Error("Unrecognized command"));
 		});

@@ -2,7 +2,7 @@ import * as pulumi from "@pulumi/pulumi";
 import * as aws from "@pulumi/aws";
 
 import { lambdaRole } from './roles';
-import { dynamoTable } from "./dynamodb";
+import { dynamoTable, dynamoSearchTable } from "./dynamodb";
 import { APuserPool, APuserPoolClient } from "./cognito";
 import { publicImagesBucket } from "./public-images-bucket";
 
@@ -141,7 +141,7 @@ export const lambdaFnSearch = new aws.lambda.Function(FN_SEARCH, {
     code: new pulumi.asset.FileArchive("../argenpills-crud/src/search"),
     environment: {
         variables: {
-            "AP_TABLE": dynamoTable.name,
+            "AP_TABLE": dynamoSearchTable.name,
             "CDN_IMAGES": configImagesDomain
         }
     }
