@@ -44,8 +44,6 @@ exports.Testeablehandler = async (event, context, client) => {
 				ScanIndexForward: false
 			};
 
-			console.log(params);
-
 			// Add the ExclusiveStartKey using lastKey for pagination
 			if (lastKey) {
 				try {
@@ -92,11 +90,9 @@ exports.Testeablehandler = async (event, context, client) => {
 			const searchResults = Items.map(unmarshall);
 
 			results = searchResults.map(item => {
-				// Assuming 'record' is a string attribute in your DynamoDB items
+				//Deserialize the JSON and return it
 				return JSON.parse(item.record);
 			});
-
-			console.log(results);
 
 			//set the total items
 			headers["X-Total-Count"] = Count;
