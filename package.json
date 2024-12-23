@@ -1,12 +1,12 @@
 {
   "dependencies": {
-    "@aws-sdk/client-dynamodb": "^3.428.0",
-    "@aws-sdk/client-s3": "^3.438.0",
-    "@aws-sdk/util-dynamodb": "^3.428.0",
-    "aws-sdk": "^2.1473.0",
+    "@aws-sdk/client-dynamodb": "^3.716.0",
+    "@aws-sdk/client-s3": "^3.717.0",
+    "@aws-sdk/util-dynamodb": "^3.716.0",
+    "aws-sdk": "^2.1692.0",
     "busboy": "^1.6.0",
-    "dotenv": "^16.3.1",
-    "joi": "^17.11.0",
-    "lambda-local": "^2.1.2"
+    "dotenv": "^16.4.7",
+    "joi": "^17.13.3",
+    "lambda-local": "^2.2.0"
   }
 }
