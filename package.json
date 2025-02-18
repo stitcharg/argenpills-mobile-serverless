@@ -2,6 +2,7 @@
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.716.0",
     "@aws-sdk/client-s3": "^3.717.0",
+    "@aws-sdk/client-ssm": "^3.750.0",
     "@aws-sdk/util-dynamodb": "^3.716.0",
     "aws-sdk": "^2.1692.0",
     "busboy": "^1.6.0",

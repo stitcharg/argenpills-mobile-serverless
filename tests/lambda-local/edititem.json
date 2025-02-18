@@ -7,7 +7,7 @@
         "accept": "application/json; charset=utf-8",
         "accept-encoding": "gzip, deflate, br",
         "accept-language": "en-US,en;q=0.5",
-        "authorization": "Bearer eyJraWQiOiJuQzhuR2Rlb2hSd1g2eW5aWlZwTzRuUElUQ1dsZ3pZcXZxTDVycnFtM1R3PSIsImFsZyI6IlJTMjU2In0.eyJvcmlnaW5fanRpIjoiYTAzOTg2OWEtMWI0NS00NWEwLWI1NTgtYmY2NGEyMDQ2ZTk1Iiwic3ViIjoiYWIzZWM0YWQtMmI2ZC00OWFkLTk3M2ItMTI3NjE1ZjMwZTg2IiwiYXVkIjoidDhtc2QxbXVwdDIxMHNzY2k1MzYxdmo2bCIsImV2ZW50X2lkIjoiN2ZjNWE4ZWUtY2ZhMS00NDBhLWFhMmEtMWJhNTM4ZDNhYzA5IiwidG9rZW5fdXNlIjoiaWQiLCJhdXRoX3RpbWUiOjE3MDU1ODIxNzQsImlzcyI6Imh0dHBzOlwvXC9jb2duaXRvLWlkcC51cy1lYXN0LTEuYW1hem9uYXdzLmNvbVwvdXMtZWFzdC0xX0dtSjBSRWJsQyIsImNvZ25pdG86dXNlcm5hbWUiOiJUZXN0IiwiZXhwIjoxNzA1NTg5MDY3LCJpYXQiOjE3MDU1ODU0NjcsImp0aSI6IjVlNGYwNTY1LWFhZGMtNGNmZS1iNWE2LTFmMDEyMjZjOWM4YSJ9.bPVvM_iBko3nKfCcHm9N3WIzgHyBT0azCvLXcrgFwNQ1ruJOr1aQYW5QP2Okcedv5mVJwnXNX1rkoyK8AgtynD8kJ2lIqlf60lTuir64XmLn0HkRoFZ-QMCK6WHT0lG-ZOV4_2J1gGjWuom4ej41U0WdM0lDPGa9OGCse1UPWKOPvHR8QJVkGtvLGI8Xv-7QyrPSyQtIOsPaYjgLS4zbs49UGw-oFqASlppWh-pYe4bYJMDyFeJ5QLeCoo6aKo2AK_0hhX2gNE64ilE31K73ojcN25Ha7FHTVJayVs61OriapGO6MRcgGpTXUaoRjUIt7RXsS9RJNMPqslSUwfh1Sw",
+        "authorization": "Bearer eyJraWQiOiJuQzhuR2Rlb2hSd1g2...",
         "content-length": "1034",
         "content-type": "multipart/form-data; boundary=---------------------------40399619637507110073379538895",
         "host": "api.sandbox.argenpills.info",
