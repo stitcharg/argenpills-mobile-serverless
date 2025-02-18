@@ -19,4 +19,8 @@ lambda-local -l edititem.js -h handler -e ../../../tests/lambda-local/edititem.j
 lambda-local -l search.js -h handler -e ../../../tests/lambda-local/search.json -E '{"AP_TABLE": "argenpills-pills-search", "CDN_IMAGES": "https://images.sandbox.argenpills.info" }'
 ```
 
+### AI Bot History
+```
+lambda-local -l aibothistory.js -h handler -e ../../../tests/lambda-local/aibothistory.json
+```
 

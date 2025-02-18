@@ -8,6 +8,7 @@ import { imagesCDN, publicImagesBucket } from './public-images-bucket';
 import { certificateAPI } from "./certificates";
 import { apiGatewayLoggingRole } from "./roles";
 import { dynamoTable, dynamoReferenceTable, dynamoSearchTable } from "./dynamodb";
+import { historyEndpoint, historyToken } from "./parameters";
 import {
 	lambdaFnGetItem,
 	lambdaFnAuth,
@@ -17,7 +18,8 @@ import {
 	lambdaFnSearch,
 	lambdaFnDashboard,
 	lambdaFnEdit,
-	lambdaFnAdd
+	lambdaFnAdd,
+	lambdaFnAiBotHistory
 } from './lambdafunctions';
 import { dashboardUrlCRUD } from './cloudwatch-dashboard';
 
@@ -57,6 +59,7 @@ const routes = [
 	{ path: "/dashboard", method: "GET", lambda: lambdaFnDashboard, name: "Dashboard", authenticate: false },
 	{ path: "/items/{id}", method: "PUT", lambda: lambdaFnEdit, name: "EditItem", authenticate: true },
 	{ path: "/items", method: "POST", lambda: lambdaFnAdd, name: "AddItem", authenticate: true },
+	{ path: "/aibothistory", method: "GET", lambda: lambdaFnAiBotHistory, name: "GetAiBotHistory", authenticate: true },
 ]
 
 const customAuthorizer = new aws.apigatewayv2.Authorizer("CognitoAuhorizer", {
@@ -123,11 +126,14 @@ new aws.cloudwatch.LogSubscriptionFilter("argenpills-crud-debug", {
 // Aggregate all the route URNs into a single output
 const allRoutes = pulumi.all(routeArray);
 
-// Create a Deployment
+// Create a Deployment that depends on all routes being created
 const currentTimestamp = new Date().toISOString();
 const deployment = new aws.apigatewayv2.Deployment("ap-crud-deploy", {
 	apiId: httpApi.id,
 	description: `Deployment at ${currentTimestamp}`,
+}, {
+	dependsOn: [...routeArray, ...routes.map(r => r.lambda)],
+	replaceOnChanges: ["description"] // Force new deployment when routes change
 });
 
 // Create a custom domain name
@@ -151,25 +157,29 @@ if (stack === ENV_DEV) {
 		apiId: httpApi.id,
 		name: "dev",
 		deploymentId: deployment.id,
-		autoDeploy: true,
+		autoDeploy: false, // Disable auto deploy
 		accessLogSettings: {
 			destinationArn: CWAPILogs.arn,
 			format: "$context.identity.sourceIp $context.identity.caller $context.identity.user [$context.requestTime] \"$context.httpMethod $context.resourcePath $context.protocol\" $context.status $context.responseLength $context.requestId"
 		},
 		description: `Deployment at ${currentTimestamp}`,
-	}, { dependsOn: allRoutes });
+	}, {
+		dependsOn: [deployment, ...routeArray]
+	});
 } else {
 	stage = new aws.apigatewayv2.Stage("v1", {
 		apiId: httpApi.id,
 		name: "v1",
 		deploymentId: deployment.id,
-		autoDeploy: true,
+		autoDeploy: false,
 		accessLogSettings: {
 			destinationArn: CWAPILogs.arn,
 			format: "$context.identity.sourceIp $context.identity.caller $context.identity.user [$context.requestTime] \"$context.httpMethod $context.resourcePath $context.protocol\" $context.status $context.responseLength $context.requestId"
 		},
 		description: `Deployment at ${currentTimestamp}`,
-	}, { dependsOn: allRoutes });
+	}, {
+		dependsOn: [deployment, ...routeArray]
+	});
 }
 
 // Create an API mapping that connects the custom domain name to your HTTP API
@@ -196,3 +206,6 @@ export const bucketImages = publicImagesBucket.id;
 export const APIHost = customDomain.domainName;
 
 export const dashboardCRUD = dashboardUrlCRUD;
+
+export const historyTokenArn = historyToken.arn;
+export const historyEndpointArn = historyEndpoint.arn;
