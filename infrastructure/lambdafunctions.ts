@@ -240,3 +240,23 @@ const lambdaLogGroupAdd = new aws.cloudwatch.LogGroup(`${FN_ADD}-log-group`, {
     name: logGroupNameAdd,
     retentionInDays: 3,
 }, { dependsOn: [lambdaFnAdd] });
+
+
+//---------
+const FN_AIBOT = "argenpills-aibot-history";
+export const lambdaFnAiBotHistory = new aws.lambda.Function(FN_AIBOT, {
+    role: lambdaRole.arn,
+    description: "AP: Ver historico de consultas del bot de IA",
+    handler: "aibothistory.handler",
+    runtime: aws.lambda.Runtime.NodeJS18dX,
+    timeout: 10,
+    code: new pulumi.asset.FileArchive("../argenpills-crud/src/aibothistory")
+});
+
+// Override the retention days from default CW log
+const logGroupNameAiBotHistory = lambdaFnAiBotHistory.name.apply(name => `/aws/lambda/${name}`);
+
+const lambdaLogGroupAiBotSearch = new aws.cloudwatch.LogGroup(`${FN_AIBOT}-log-group`, {
+    name: logGroupNameAiBotHistory,
+    retentionInDays: 3,
+}, { dependsOn: [lambdaFnAiBotHistory] });

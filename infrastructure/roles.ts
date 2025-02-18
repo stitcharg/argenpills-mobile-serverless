@@ -51,6 +51,24 @@ new aws.iam.RolePolicy("lambdaClodwatchLogs", {
     },
 });
 
+// Add policy to allow reading from Parameter Store
+new aws.iam.RolePolicy("lambdaParameterStorePolicy", {
+    role: lambdaRole.id,
+    policy: {
+        Version: "2012-10-17",
+        Statement: [{
+            Effect: "Allow",
+            Action: [
+                "ssm:GetParameter",
+                "ssm:GetParameters"
+            ],
+            Resource: [
+                "arn:aws:ssm:*:*:parameter/argenpills/prod/aibot/*"
+            ]
+        }]
+    }
+});
+
 // Create IAM Role and Policy to allow API Gateway to write to CloudWatch Logs
 export const apiGatewayLoggingRole = new aws.iam.Role("apiGatewayLoggingRole", {
     assumeRolePolicy: JSON.stringify({
