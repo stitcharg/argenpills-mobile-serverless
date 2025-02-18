@@ -64,7 +64,7 @@ if (stack === ENV_DEV) {
 		hashKey: "id",
 		name: "argenpills",
 		pointInTimeRecovery: {
-			enabled: false,
+			enabled: true,
 		},
 		readCapacity: 1,
 		streamEnabled: true,
