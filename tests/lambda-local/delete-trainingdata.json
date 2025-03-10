@@ -1,0 +1,48 @@
+{
+	"version": "2.0",
+	"routeKey": "DELETE /trainingdata/{id}",
+	"rawPath": "/dev/trainingdata/aea3e181-4f70-4604-8b8a-13b39b27514a",
+	"headers": {
+		"accept": "application/json, text/plain, */*",
+		"accept-encoding": "gzip, deflate, br",
+		"accept-language": "en-US,en;q=0.5",
+		"content-length": "0",
+		"authorization": "Bearer eyJraWQiOiJuQzhuR2Rlb2hSd1g2eW5aWlZ...",
+		"host": "api.sandbox.argenpills.info",
+		"origin": "http://localhost:3000",
+		"referer": "http://localhost:3000/",
+		"sec-fetch-dest": "empty",
+		"sec-fetch-mode": "cors",
+		"sec-fetch-site": "cross-site",
+		"user-agent": "Mozilla/5.0 (X11; Linux x86_64; rv:121.0) Gecko/20100101 Firefox/121.0",
+		"x-amzn-trace-id": "Root=1-65aa75f7-08f738d44dfb1c724123ef6d",
+		"x-forwarded-for": "190.103.176.147",
+		"x-forwarded-port": "443",
+		"x-forwarded-proto": "https",
+		"x-api-secret-token": "123"
+	},
+	"queryStringParameters": {},
+	"requestContext": {
+		"accountId": "274370362803",
+		"apiId": "jzoxfb2jxe",
+		"domainName": "api.sandbox.argenpills.info",
+		"domainPrefix": "api",
+		"http": {
+			"method": "DELETE",
+			"path": "/dev/trainingdata",
+			"protocol": "HTTP/1.1",
+			"sourceIp": "190.103.176.147",
+			"userAgent": "Mozilla/5.0 (X11; Linux x86_64; rv:121.0) Gecko/20100101 Firefox/121.0"
+		},
+		"requestId": "RydethCSoAMEaww=",
+		"routeKey": "DELETE /trainingdata/{id}",
+		"stage": "dev",
+		"time": "19/Jan/2024:13:15:35 +0000",
+		"timeEpoch": 1705670135473
+	},
+	"pathParameters": {
+		"id": "aea3e181-4f70-4604-8b8a-13b39b27514a"
+	},
+	"body": "{ }",
+	"isBase64Encoded": false
+}
