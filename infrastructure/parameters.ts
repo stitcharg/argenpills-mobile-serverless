@@ -18,3 +18,20 @@ export const historyToken = new aws.ssm.Parameter("aibotHistoryToken", {
 	ignoreChanges: ["value"]
 });
 
+export const trainingEndpoint = new aws.ssm.Parameter("aibotTrainingEndpoint", {
+	name: "/argenpills/prod/aibot/training_endpoint",
+	type: "SecureString",
+	value: "https://your-api-endpoint.com",
+	description: "Endpoint URL de la API para entrenar la AI",
+}, {
+	ignoreChanges: ["value"]
+});
+
+export const trainingToken = new aws.ssm.Parameter("aibotTrainingToken", {
+	name: "/argenpills/prod/aibot/training_token",
+	type: "SecureString",
+	value: "your-secret-token",
+	description: "Authentication token de la API de entrenamiento",
+}, {
+	ignoreChanges: ["value"]
+});
