@@ -24,3 +24,15 @@ lambda-local -l search.js -h handler -e ../../../tests/lambda-local/search.json 
 lambda-local -l aibothistory.js -h handler -e ../../../tests/lambda-local/aibothistory.json
 ```
 
+### AI Training data
+```
+lambda-local -l trainingdata.js -h handler -e ../../../tests/lambda-local/get-trainingdata.json
+
+lambda-local -l trainingdata.js -h handler -e ../../../tests/lambda-local/get-list-trainingdata.json
+
+lambda-local -l trainingdata.js -h handler -e ../../../tests/lambda-local/post-trainingdata.json
+
+lambda-local -l trainingdata.js -h handler -e ../../../tests/lambda-local/put-trainingdata.json
+
+lambda-local -l trainingdata.js -h handler -e ../../../tests/lambda-local/delete-trainingdata.json
+```

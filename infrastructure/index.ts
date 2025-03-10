@@ -8,7 +8,7 @@ import { imagesCDN, publicImagesBucket } from './public-images-bucket';
 import { certificateAPI } from "./certificates";
 import { apiGatewayLoggingRole } from "./roles";
 import { dynamoTable, dynamoReferenceTable, dynamoSearchTable } from "./dynamodb";
-import { historyEndpoint, historyToken } from "./parameters";
+import { historyEndpoint, historyToken, trainingEndpoint, trainingToken } from "./parameters";
 import {
 	lambdaFnGetItem,
 	lambdaFnAuth,
@@ -19,7 +19,8 @@ import {
 	lambdaFnDashboard,
 	lambdaFnEdit,
 	lambdaFnAdd,
-	lambdaFnAiBotHistory
+	lambdaFnAiBotHistory,
+	lambdaFnAiBotTraining
 } from './lambdafunctions';
 import { dashboardUrlCRUD } from './cloudwatch-dashboard';
 
@@ -60,6 +61,11 @@ const routes = [
 	{ path: "/items/{id}", method: "PUT", lambda: lambdaFnEdit, name: "EditItem", authenticate: true },
 	{ path: "/items", method: "POST", lambda: lambdaFnAdd, name: "AddItem", authenticate: true },
 	{ path: "/aibothistory", method: "GET", lambda: lambdaFnAiBotHistory, name: "GetAiBotHistory", authenticate: true },
+	{ path: "/trainingdata", method: "GET", lambda: lambdaFnAiBotTraining, name: "GetAiTrainingData", authenticate: true },
+	{ path: "/trainingdata/{id}", method: "GET", lambda: lambdaFnAiBotTraining, name: "GetOneAiTrainingData", authenticate: true },
+	{ path: "/trainingdata", method: "POST", lambda: lambdaFnAiBotTraining, name: "PostAiTrainingData", authenticate: true },
+	{ path: "/trainingdata/{id}", method: "PUT", lambda: lambdaFnAiBotTraining, name: "PutAiTrainingData", authenticate: true },
+	{ path: "/trainingdata/{id}", method: "DELETE", lambda: lambdaFnAiBotTraining, name: "DeleteAiTrainingData", authenticate: true }
 ]
 
 const customAuthorizer = new aws.apigatewayv2.Authorizer("CognitoAuhorizer", {
@@ -209,3 +215,5 @@ export const dashboardCRUD = dashboardUrlCRUD;
 
 export const historyTokenArn = historyToken.arn;
 export const historyEndpointArn = historyEndpoint.arn;
+export const trainingEndpointArn = trainingEndpoint.arn;
+export const trainingTokenArn = trainingToken.arn;
