@@ -21,8 +21,8 @@ jobs:
         node-version: [18.x]
 
     steps:
-    - uses: actions/checkout@v3
     - uses: oven-sh/setup-bun@v2
+    - uses: actions/checkout@v3
       with:
         ref: ${{ github.event.inputs.branch }}
     - name: Use Node.js ${{ matrix.node-version }}
