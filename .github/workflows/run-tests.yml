@@ -21,6 +21,7 @@ jobs:
         node-version: [18.x]
 
     steps:
+    - uses: oven-sh/setup-bun@v2
     - uses: actions/checkout@v3
       with:
         ref: ${{ github.event.inputs.branch }}
@@ -30,13 +31,14 @@ jobs:
         node-version: ${{ matrix.node-version }}
     - name: Install dependencies for apps
       run: |
+        bun install
         cd argenpills-auth
-        npm install
+        bun install
         cd ..
         cd argenpills-crud
-        npm install
+        bun install
     - name: Install dependencies and run tests
       run: |
         cd tests
-        npm install
-        npm test
+        bun install
+        bun jest
