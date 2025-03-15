@@ -12,10 +12,15 @@ async function getParameter(paramName, ssmClient) {
 
 exports.Testeablehandler = async (event, context, SSMClient) => {
 	let API_URL, API_TOKEN;
+	let querystring = "";
 
 	//No soporta paginacion por ahora, pero lo dejamos para el futuro
 	const pageSize = parseInt(event.queryStringParameters?.pageSize) || 100;
 	const lastKey = event.queryStringParameters?.lastKey;
+
+	const date = event.queryStringParameters?.date;
+	if (date)
+		querystring = `?date=${date}`;
 
 	const headers = {
 		"Content-Type": "application/json; charset=utf-8",
@@ -23,14 +28,13 @@ exports.Testeablehandler = async (event, context, SSMClient) => {
 	};
 
 	try {
-
 		[API_URL, API_TOKEN] = await Promise.all([
 			getParameter('/argenpills/prod/aibot/history_endpoint', SSMClient),
 			getParameter('/argenpills/prod/aibot/history_token', SSMClient)
 		]);
 
 		//const response = await fetch(`${API_URL}?pageSize=${pageSize}${lastKey ? `&lastKey=${lastKey}` : ''}`, {
-		const response = await fetch(`${API_URL}`, {
+		const response = await fetch(`${API_URL}${querystring}`, {
 			headers: {
 				'x-api-secret-token': `${API_TOKEN}`
 			}
