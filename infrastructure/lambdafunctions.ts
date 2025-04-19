@@ -15,7 +15,7 @@ export const lambdaFnGetItem = new aws.lambda.Function(FN_GETITEM, {
 	role: lambdaRole.arn,
 	description: "AP CRUD: Traer una pastilla por ID",
 	handler: "getitem.handler",
-	runtime: aws.lambda.Runtime.NodeJS18dX,
+	runtime: aws.lambda.Runtime.NodeJS20dX,
 	code: new pulumi.asset.FileArchive("../argenpills-crud/src/getitem"),
 	environment: {
 		variables: {
@@ -39,7 +39,7 @@ export const lambdaFnAuth = new aws.lambda.Function(FN_AUTH, {
 	role: lambdaRole.arn,
 	description: "LAMBDA para autenticar usuarios a la API",
 	handler: "auth.handler", // Entry file is named `x.js` and exports a `handler` function
-	runtime: aws.lambda.Runtime.NodeJS18dX,
+	runtime: aws.lambda.Runtime.NodeJS20dX,
 	code: new pulumi.asset.FileArchive("../argenpills-auth/src/auth"),
 	environment: {
 		variables: {
@@ -63,7 +63,7 @@ export const lambdafnAuthRefreshToken = new aws.lambda.Function(FN_REFRESHTOKEN,
 	role: lambdaRole.arn,
 	description: "LAMBDA para refrescar el token de autenticacion",
 	handler: "refreshtoken.handler",
-	runtime: aws.lambda.Runtime.NodeJS18dX,
+	runtime: aws.lambda.Runtime.NodeJS20dX,
 	code: new pulumi.asset.FileArchive("../argenpills-auth/src/refreshtoken"),
 	environment: {
 		variables: {
@@ -88,7 +88,7 @@ export const lambdaFnGetItems = new aws.lambda.Function(FN_GETITEMS, {
 	role: lambdaRole.arn,
 	description: "AP CRUD: Traer todas las pastillas publicadas",
 	handler: "getitems.handler", // Entry file is named `x.js` and exports a `handler` function
-	runtime: aws.lambda.Runtime.NodeJS18dX,
+	runtime: aws.lambda.Runtime.NodeJS20dX,
 	code: new pulumi.asset.FileArchive("../argenpills-crud/src/getitems"),
 	environment: {
 		variables: {
@@ -113,7 +113,7 @@ export const lambdaFnDeleteItem = new aws.lambda.Function(FN_DELETEITEM, {
 	role: lambdaRole.arn,
 	description: "AP CRUD: Borra la pastilla. Requiere auth",
 	handler: "deleteitem.handler", // Entry file is named `x.js` and exports a `handler` function
-	runtime: aws.lambda.Runtime.NodeJS18dX,
+	runtime: aws.lambda.Runtime.NodeJS20dX,
 	code: new pulumi.asset.FileArchive("../argenpills-crud/src/deleteitem"),
 	environment: {
 		variables: {
@@ -137,7 +137,7 @@ export const lambdaFnSearch = new aws.lambda.Function(FN_SEARCH, {
 	role: lambdaRole.arn,
 	description: "AP CRUD: Buscar por palabra clave",
 	handler: "search.handler",
-	runtime: aws.lambda.Runtime.NodeJS18dX,
+	runtime: aws.lambda.Runtime.NodeJS20dX,
 	code: new pulumi.asset.FileArchive("../argenpills-crud/src/search"),
 	environment: {
 		variables: {
@@ -162,7 +162,7 @@ export const lambdaFnDashboard = new aws.lambda.Function(FN_DASHBOARD, {
 	role: lambdaRole.arn,
 	description: "AP CRUD: Dashboard",
 	handler: "dashboard.handler",
-	runtime: aws.lambda.Runtime.NodeJS18dX,
+	runtime: aws.lambda.Runtime.NodeJS20dX,
 	code: new pulumi.asset.FileArchive("../argenpills-crud/src/dashboard"),
 	environment: {
 		variables: {
@@ -186,7 +186,7 @@ export const lambdaFnEdit = new aws.lambda.Function(FN_EDIT, {
 	role: lambdaRole.arn,
 	description: "AP CRUD: Edita un item",
 	handler: "edititem/edititem.handler",
-	runtime: aws.lambda.Runtime.NodeJS18dX,
+	runtime: aws.lambda.Runtime.NodeJS20dX,
 	memorySize: 512,
 	code: new pulumi.asset.AssetArchive({
 		edititem: new pulumi.asset.FileArchive("../argenpills-crud/src/edititem"),
@@ -218,7 +218,7 @@ export const lambdaFnAdd = new aws.lambda.Function(FN_ADD, {
 	description: "AP CRUD: Agrega un item",
 	handler: "additem/additem.handler",
 	memorySize: 512,
-	runtime: aws.lambda.Runtime.NodeJS18dX,
+	runtime: aws.lambda.Runtime.NodeJS20dX,
 	code: new pulumi.asset.AssetArchive({
 		additem: new pulumi.asset.FileArchive("../argenpills-crud/src/additem"),
 		lib: new pulumi.asset.FileArchive("../argenpills-crud/src/lib"),
@@ -248,7 +248,7 @@ export const lambdaFnAiBotHistory = new aws.lambda.Function(FN_AIBOT, {
 	role: lambdaRole.arn,
 	description: "AP: Ver historico de consultas del bot de IA",
 	handler: "aibothistory.handler",
-	runtime: aws.lambda.Runtime.NodeJS18dX,
+	runtime: aws.lambda.Runtime.NodeJS20dX,
 	timeout: 10,
 	code: new pulumi.asset.FileArchive("../argenpills-crud/src/aibothistory")
 });
@@ -268,7 +268,7 @@ export const lambdaFnAiBotTraining = new aws.lambda.Function(FN_AITRAINING, {
 	role: lambdaRole.arn,
 	description: "AP: API para entrenar el bot de AI",
 	handler: "trainingdata.handler",
-	runtime: aws.lambda.Runtime.NodeJS18dX,
+	runtime: aws.lambda.Runtime.NodeJS20dX,
 	timeout: 10,
 	code: new pulumi.asset.FileArchive("../argenpills-crud/src/trainingdata")
 });
