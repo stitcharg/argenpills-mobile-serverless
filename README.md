@@ -1,5 +1,5 @@
 # Argenpills Mobile API
-LAMBDA de Argenpills Mobile. Hecho en NodeJS 18x, preparado para correr en AWS, con infra-as-code con Pulumi
+LAMBDA de Argenpills Mobile. Hecho en NodeJS 20x, preparado para correr en AWS, con infra-as-code con Pulumi
 
 ## Infrastructure
 La infra va a crear todo lo necesario (API gateway, records en route 53, la tabla en dynamodb, roles, permisos, buckets, etc). 
