@@ -35,3 +35,37 @@ export const trainingToken = new aws.ssm.Parameter("aibotTrainingToken", {
 }, {
 	ignoreChanges: ["value"]
 });
+
+//ALGOLIA
+export const algoliaApplicationId = new aws.ssm.Parameter("algoliaApplicationId", {
+	name: "/argenpills/prod/algolia/application_id",
+	type: "SecureString",
+	value: "algoliaID",
+	description: "Application ID de Algolia",
+}, {
+	ignoreChanges: ["value"]
+});
+export const algoliaSearchKey = new aws.ssm.Parameter("algoliaSearchKey", {
+	name: "/argenpills/prod/algolia/search_key",
+	type: "SecureString",
+	value: "algoliaKey1",
+	description: "Algolia Search Key",
+}, {
+	ignoreChanges: ["value"]
+});
+export const algoliaWriteKey = new aws.ssm.Parameter("algoliaWriteKey", {
+	name: "/argenpills/prod/algolia/write_key",
+	type: "SecureString",
+	value: "algoliaKey2",
+	description: "Algolia Write Key",
+}, {
+	ignoreChanges: ["value"]
+});
+export const algoliaIndex = new aws.ssm.Parameter("algoliaIndex", {
+	name: "/argenpills/prod/algolia/index_name",
+	type: "String",
+	value: "indexname",
+	description: "Algolia Index Name",
+}, {
+	ignoreChanges: ["value"]
+});
