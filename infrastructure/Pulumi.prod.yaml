@@ -4,3 +4,5 @@ config:
   argenpills-crud-infrastructure:zone: argenpills.info
   aws:profile: ap_prod
   aws:region: us-east-1
+  argenpills-crud-infrastructure:dynamodb-ai-history-arn: arn:aws:dynamodb:us-east-1:REDACTED:table/telegram-bot-history
+  argenpills-crud-infrastructure:dynamodb-ai-history-name: telegram-bot-history

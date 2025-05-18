@@ -797,6 +797,30 @@ const mockSearchTableSample = {
 	]
 }
 
+const mockDashboardAIhistory = {
+	"$metadata": {
+		"httpStatusCode": 200,
+		"requestId": "F8L2107FA8BTQM1LBR3PTG2VDNVV4KQNSO5AEMVJF66Q9ASUAAJG",
+		"attempts": 1,
+		"totalRetryDelay": 0
+	},
+	"Count": 3,
+	"Items": [
+		{
+			"chatId": { "S": 9999999 },
+			"createdAtDate": { "S": "2025-01-01" }
+		},
+		{
+			"chatId": { "S": 9999991 },
+			"createdAtDate": { "S": "2025-01-01" }
+		},
+		{
+			"chatId": { "S": 9999995 },
+			"createdAtDate": { "S": "2025-01-01" }
+		},
+	]
+}
+
 module.exports = {
 	mockGetItemsResponse,
 	mockSearchResults,
@@ -809,5 +833,6 @@ module.exports = {
 	mockPagedDataSecondPage,
 	mockTableDescription,
 	mockSingleItemResponseSpecialChars,
-	mockSearchTableSample
+	mockSearchTableSample,
+	mockDashboardAIhistory
 }
