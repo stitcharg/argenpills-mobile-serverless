@@ -8,6 +8,7 @@ import { publicImagesBucket } from "./public-images-bucket";
 
 const config = new pulumi.Config();
 const configImagesDomain = `https://${config.require("images")}`;
+const configAIHistoryTableName = config.require("dynamodb-ai-history-name");	//Esto lo maneja otro stack
 
 //GET ITEM
 const FN_GETITEM = "argenpills-crud-getitem";
@@ -161,12 +162,17 @@ const FN_DASHBOARD = "argenpills-crud-dashboard";
 export const lambdaFnDashboard = new aws.lambda.Function(FN_DASHBOARD, {
 	role: lambdaRole.arn,
 	description: "AP CRUD: Dashboard",
-	handler: "dashboard.handler",
+	handler: "dashboard/dashboard.handler",
 	runtime: aws.lambda.Runtime.NodeJS20dX,
-	code: new pulumi.asset.FileArchive("../argenpills-crud/src/dashboard"),
+	code: new pulumi.asset.AssetArchive({
+		dashboard: new pulumi.asset.FileArchive("../argenpills-crud/src/dashboard"),
+		node_modules: new pulumi.asset.FileArchive("../node_modules")
+	}),
+
 	environment: {
 		variables: {
-			"AP_TABLE": dynamoTable.name
+			"AP_TABLE": dynamoTable.name,
+			"AP_AIBOT_HISTORY_TABLE": configAIHistoryTableName
 		}
 	}
 });

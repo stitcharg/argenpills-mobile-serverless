@@ -10,6 +10,9 @@ let dynamoTable: aws.dynamodb.Table;
 let dynamoReferenceTable: aws.dynamodb.Table;
 let dynamoSearchTable: aws.dynamodb.Table;
 
+const config = new pulumi.Config();
+const configDynamoDbAIHistory = config.require("dynamodb-ai-history-arn");	//Esto lo maneja otro stack
+
 if (stack === ENV_DEV) {
 	// Create a DynamoDB table
 	dynamoTable = new aws.dynamodb.Table("argenpills-pills", {
@@ -120,10 +123,13 @@ dynamoSearchTable = new aws.dynamodb.Table("argenpills-pills-search", {
 new aws.iam.RolePolicy("lambdaDynamoPolicy", {
 	role: lambdaRole.id,
 	policy: pulumi.all(
-		[dynamoTable.arn,
-		dynamoReferenceTable.arn,
-		dynamoSearchTable.arn]
-	).apply(([pillTableArn, pillTelegramReferenceTable, pillSearchTable]) => JSON.stringify({
+		[
+			dynamoTable.arn,
+			dynamoReferenceTable.arn,
+			dynamoSearchTable.arn,
+			configDynamoDbAIHistory
+		]
+	).apply(([pillTableArn, pillTelegramReferenceTable, pillSearchTable, aiHistoryBotTable]) => JSON.stringify({
 		Version: "2012-10-17",
 		Statement: [{
 			Action: [
@@ -143,6 +149,8 @@ new aws.iam.RolePolicy("lambdaDynamoPolicy", {
 				`${pillTelegramReferenceTable}/index/*`,
 				pillSearchTable,
 				`${pillSearchTable}/index/*`,
+				aiHistoryBotTable,
+				`${aiHistoryBotTable}/index/*`
 			],
 		}],
 	})),
