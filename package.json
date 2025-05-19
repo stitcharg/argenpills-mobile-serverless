@@ -6,6 +6,7 @@
     "@aws-sdk/util-dynamodb": "^3.716.0",
     "aws-sdk": "^2.1692.0",
     "busboy": "^1.6.0",
+    "date-fns": "^4.1.0",
     "dotenv": "^16.4.7",
     "joi": "^17.13.3",
     "lambda-local": "^2.2.0"

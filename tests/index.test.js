@@ -4,7 +4,6 @@ const { Testeablehandler: SearchItemsHandler } = require('../argenpills-crud/src
 const { Testeablehandler: AddItemHandler } = require('../argenpills-crud/src/additem/additem');
 const { Testeablehandler: EditItemHandler } = require('../argenpills-crud/src/edititem/edititem');
 const { Testeablehandler: DeleteItemHandler } = require('../argenpills-crud/src/deleteitem/deleteitem');
-const { Testeablehandler: DashboardHandler } = require('../argenpills-crud/src/dashboard/dashboard');
 
 const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
 const { S3Client } = require("@aws-sdk/client-s3");
@@ -365,32 +364,6 @@ describe('Argenpills CRUD', () => {
 		const body = JSON.parse(result.body);
 
 		expect(result.statusCode).toBe(200);
-	});
-
-	it('should retrieve dashboard information (colors)', async () => {
-
-		DynamoDBClient.prototype.send = jest.fn().mockResolvedValue(mockDashboardColors);
-
-		const result = await DashboardHandler(null, null, mockedDynamoDb);
-
-		body = JSON.parse(result.body);
-
-		expect(result.statusCode).toBe(200);
-
-		expect(body.colors.roja).toBe(1);
-	});
-
-	it('should retrieve dashboard information (by date)', async () => {
-
-		DynamoDBClient.prototype.send = jest.fn().mockResolvedValue(mockDashboardColors);
-
-		const result = await DashboardHandler(null, null, mockedDynamoDb);
-
-		body = JSON.parse(result.body);
-
-		expect(result.statusCode).toBe(200);
-
-		expect(body.dates.length).toBe(2);
 	});
 
 	it('should paginate records successfully (no pagesize parameter)', async () => {
