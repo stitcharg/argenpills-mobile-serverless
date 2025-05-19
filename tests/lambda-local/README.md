@@ -36,3 +36,8 @@ lambda-local -l trainingdata.js -h handler -e ../../../tests/lambda-local/put-tr
 
 lambda-local -l trainingdata.js -h handler -e ../../../tests/lambda-local/delete-trainingdata.json
 ```
+
+### Dashboard
+```
+lambda-local -l dashboard.js -h handler -e ../../../tests/lambda-local/dashboard.json -E '{"AP_TABLE": "argenpills-pills-8c4b3e0", "AP_AIBOT_HISTORY_TABLE": "telegram-bot-history"}'
+```
