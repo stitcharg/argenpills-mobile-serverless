@@ -166,7 +166,7 @@ if (stack === ENV_DEV) {
 		autoDeploy: false, // Disable auto deploy
 		accessLogSettings: {
 			destinationArn: CWAPILogs.arn,
-			format: "$context.identity.sourceIp $context.identity.caller $context.identity.user [$context.requestTime] \"$context.httpMethod $context.resourcePath $context.protocol\" $context.status $context.responseLength $context.requestId"
+			format: "$context.identity.sourceIp $context.identity.caller $context.identity.user [$context.requestTime] \"$context.routeKey $context.protocol\" $context.status $context.responseLength $context.requestId"
 		},
 		description: `Deployment at ${currentTimestamp}`,
 	}, {
@@ -180,7 +180,7 @@ if (stack === ENV_DEV) {
 		autoDeploy: false,
 		accessLogSettings: {
 			destinationArn: CWAPILogs.arn,
-			format: "$context.identity.sourceIp $context.identity.caller $context.identity.user [$context.requestTime] \"$context.httpMethod $context.resourcePath $context.protocol\" $context.status $context.responseLength $context.requestId"
+			format: "$context.identity.sourceIp $context.identity.caller $context.identity.user [$context.requestTime] \"$context.routeKey $context.protocol\" $context.status $context.responseLength $context.requestId"
 		},
 		description: `Deployment at ${currentTimestamp}`,
 	}, {
