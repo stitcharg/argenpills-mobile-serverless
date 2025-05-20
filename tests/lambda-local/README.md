@@ -8,6 +8,8 @@
 
 
 ## Commands
+### List
+lambda-local -l getitems.js -h handler -e ../../../tests/lambda-local/get-items.json -E '{"AP_TABLE": "argenpills-pills-8c4b3e0", "CDN_IMAGES": "https://images.sandbox.argenpills.info", "S3_BUCKET": "images.sandbox.argenpills.info" }'
 
 ### Edit
 ```

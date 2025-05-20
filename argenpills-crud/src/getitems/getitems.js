@@ -1,6 +1,16 @@
 const { DynamoDBClient, QueryCommand, GetItemCommand, DescribeTableCommand } = require("@aws-sdk/client-dynamodb");
 const { marshall, unmarshall } = require('@aws-sdk/util-dynamodb');
 
+// In-memory cache
+const cache = {
+	items: new Map(),
+	count: null,
+	lastUpdated: null
+};
+
+// Cache TTL in milliseconds (5 minutes)
+const CACHE_TTL = 5 * 60 * 1000;
+
 exports.Testeablehandler = async (event, context, client) => {
 	let body;
 	let totalItems = 0; //will store the x-total-count for the /items
@@ -16,6 +26,23 @@ exports.Testeablehandler = async (event, context, client) => {
 	const AP_TABLE = process.env.AP_TABLE;
 	//This is the URL where the images are hosted. In this case is a CF distribution
 	const CDN_IMAGES = process.env.CDN_IMAGES;
+
+	// Check if cache is valid
+	const now = Date.now();
+	if (cache.lastUpdated && (now - cache.lastUpdated) < CACHE_TTL) {
+		const cacheKey = `${pageSize}:${lastKey || 'first'}`;
+		const cachedResult = cache.items.get(cacheKey);
+
+		if (cachedResult) {
+			return {
+				...cachedResult,
+				headers: {
+					...cachedResult.headers,
+					"X-Cache": "HIT"
+				}
+			};
+		}
+	}
 
 	let params = {
 		Limit: pageSize,
@@ -92,7 +119,7 @@ exports.Testeablehandler = async (event, context, client) => {
 			return row;
 		});
 
-		return {
+		const response = {
 			headers,
 			statusCode: 200,
 			body: JSON.stringify({
@@ -101,6 +128,13 @@ exports.Testeablehandler = async (event, context, client) => {
 			})
 		};
 
+		// Update cache
+		const cacheKey = `${pageSize}:${lastKey || 'first'}`;
+		cache.items.set(cacheKey, response);
+		cache.lastUpdated = now;
+
+		return response;
+
 	} catch (err) {
 		console.log("ERROR", err);
 		throw new Error('Unable to query data');
@@ -108,16 +142,25 @@ exports.Testeablehandler = async (event, context, client) => {
 };
 
 async function countItems(client, tableName) {
-	const params = new DescribeTableCommand(
-		{
-			TableName: tableName
-		}
-	);
+	// Check if count is cached and valid
+	const now = Date.now();
+	if (cache.count !== null && cache.lastUpdated && (now - cache.lastUpdated) < CACHE_TTL) {
+		return cache.count;
+	}
+
+	const params = new DescribeTableCommand({
+		TableName: tableName
+	});
 
 	try {
 		const response = await client.send(params);
+		const count = response.Table.ItemCount;
 
-		return response.Table.ItemCount;
+		// Update cache
+		cache.count = count;
+		cache.lastUpdated = now;
+
+		return count;
 	} catch (ex) {
 		console.log("ERROR COUNTING ITEMS", ex);
 		return 0;
