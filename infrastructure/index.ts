@@ -23,10 +23,13 @@ import {
 	lambdaFnAiBotTraining
 } from './lambdafunctions';
 import { dashboardUrlCRUD } from './cloudwatch-dashboard';
+import { alarms } from './cloudwatch-alerts';
+import { httpApi } from "./httpApi";
 
 // Reading configuration from files
 const config = new pulumi.Config();
 const configAPIHost = config.require("api");
+const snstopicArn = config.require("snstopic-arn");
 const stack = pulumi.getStack();
 
 new aws.iam.RolePolicyAttachment("apiGatewayLoggingPolicyAttachment", {
@@ -37,16 +40,6 @@ new aws.iam.RolePolicyAttachment("apiGatewayLoggingPolicyAttachment", {
 // Set CloudWatch role ARN globally for API Gateway
 new aws.apigateway.Account("apiGatewayAccount", {
 	cloudwatchRoleArn: apiGatewayLoggingRole.arn,
-});
-
-const httpApi = new aws.apigatewayv2.Api("argenpills-crud", {
-	protocolType: "HTTP",
-	corsConfiguration: {
-		allowOrigins: ['*'],
-		allowMethods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'],
-		allowHeaders: ['Authorization', 'Content-type'],
-		exposeHeaders: ['x-total-count']
-	},
 });
 
 // Define routes and their corresponding Lambda functions
@@ -217,3 +210,5 @@ export const historyTokenArn = historyToken.arn;
 export const historyEndpointArn = historyEndpoint.arn;
 export const trainingEndpointArn = trainingEndpoint.arn;
 export const trainingTokenArn = trainingToken.arn;
+
+export const alarmsArn = alarms.map(alarm => alarm.arn);
