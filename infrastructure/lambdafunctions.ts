@@ -89,7 +89,7 @@ export const lambdaFnGetItems = new aws.lambda.Function(FN_GETITEMS, {
 	role: lambdaRole.arn,
 	description: "AP CRUD: Traer todas las pastillas publicadas",
 	handler: "getitems.handler", // Entry file is named `x.js` and exports a `handler` function
-	runtime: aws.lambda.Runtime.NodeJS20dX,
+	runtime: aws.lambda.Runtime.NodeJS22dX,
 	code: new pulumi.asset.FileArchive("../argenpills-crud/src/getitems"),
 	environment: {
 		variables: {

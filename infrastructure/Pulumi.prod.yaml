@@ -7,3 +7,5 @@ config:
   argenpills-crud-infrastructure:dynamodb-ai-history-arn:
     secure: AAABAKzIHxJTyIOGkm0i4Mwf+qweJfzUa5X/uI2tCRm8ociSkJgKso0mwLWjOunT44tGhFtNa2Rlr4CPN/lmcDKXXkzdW3+k+B5GJD2UhGspI1h7KGazYxB0SseUNDtxP1w=
   argenpills-crud-infrastructure:dynamodb-ai-history-name: telegram-bot-history
+  argenpills-crud-infrastructure:snstopic-arn:
+    secure: AAABABoDyM5njYGZ1oDDMC9Gu3Mjg8h/INvfcCy63qD6JEtNww2htbM94qSy7HBuiyUiLJLtry4ms5bUgxrrPhpOFBSfAdElVeXU7kUiog==
