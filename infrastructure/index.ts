@@ -23,10 +23,12 @@ import {
 	lambdaFnAiBotTraining
 } from './lambdafunctions';
 import { dashboardUrlCRUD } from './cloudwatch-dashboard';
+import { alarms } from './cloudwatch-alerts';
 
 // Reading configuration from files
 const config = new pulumi.Config();
 const configAPIHost = config.require("api");
+const snstopicArn = config.require("snstopic-arn");
 const stack = pulumi.getStack();
 
 new aws.iam.RolePolicyAttachment("apiGatewayLoggingPolicyAttachment", {
@@ -217,3 +219,5 @@ export const historyTokenArn = historyToken.arn;
 export const historyEndpointArn = historyEndpoint.arn;
 export const trainingEndpointArn = trainingEndpoint.arn;
 export const trainingTokenArn = trainingToken.arn;
+
+export const alarmsArn = alarms.map(alarm => alarm.arn);
