@@ -6,6 +6,8 @@ import {
 	lambdaFnGetItems,
 	lambdaFnSearch
 } from './lambdafunctions';
+import { httpApi } from "./httpApi";
+import { CWAPILogs } from "./logs";
 
 const config = new pulumi.Config();
 const snstopicArn = config.require("snstopic-arn");
@@ -37,4 +39,33 @@ lambdasToCheck.forEach(lambda => {
 	alarms.push(alarm);
 });
 
-export { alarms };
+// Create metric filter for API Gateway 4xx errors
+const apiGateway4xxMetricFilter = new aws.cloudwatch.LogMetricFilter("apiGateway4xxErrors", {
+	logGroupName: CWAPILogs.name,
+	metricTransformation: {
+		name: "ApiGateway4xxErrors",
+		namespace: "ApiGateway",
+		value: "1",
+		unit: "Count"
+	},
+	pattern: '[host, ,  , timestamp, request, statusCode=4*, size , ]'
+});
+
+// Create alarm for API Gateway 4xx errors
+const apiGateway4xxAlarm = new aws.cloudwatch.MetricAlarm("apiGateway4xxAlarm", {
+	metricName: "ApiGateway4xxErrors",
+	namespace: "ApiGateway",
+	statistic: "Sum",
+	period: 60,
+	evaluationPeriods: 1,
+	threshold: 3,
+	treatMissingData: "notBreaching",
+	comparisonOperator: "GreaterThanThreshold",
+	alarmDescription: "This metric monitors the number of 4xx errors in the API Gateway",
+	alarmActions: [snstopicArn],
+	dimensions: {
+		ApiId: httpApi.id
+	}
+});
+
+export { alarms, apiGateway4xxMetricFilter };
