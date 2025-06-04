@@ -4,7 +4,7 @@ import { ENV_DEV, ENV_PROD } from './consts'
 import { registerApiDomain } from './domains';
 import { APuserPool, APuserPoolClient } from "./cognito";
 import { CWAPILogs, CWLambdaLogs } from "./logs";
-import { imagesCDN, publicImagesBucket } from './public-images-bucket';
+import { cacheBucket, imagesCDN, publicImagesBucket } from './public-images-bucket';
 import { certificateAPI } from "./certificates";
 import { apiGatewayLoggingRole } from "./roles";
 import { dynamoTable, dynamoReferenceTable, dynamoSearchTable } from "./dynamodb";
@@ -25,11 +25,11 @@ import {
 import { dashboardUrlCRUD } from './cloudwatch-dashboard';
 import { alarms } from './cloudwatch-alerts';
 import { httpApi } from "./httpApi";
+import { ruleName } from './eventscheduler';
 
 // Reading configuration from files
 const config = new pulumi.Config();
 const configAPIHost = config.require("api");
-const snstopicArn = config.require("snstopic-arn");
 const stack = pulumi.getStack();
 
 new aws.iam.RolePolicyAttachment("apiGatewayLoggingPolicyAttachment", {
@@ -201,6 +201,7 @@ export const apiUrl = stage.invokeUrl;
 
 export const CDNImages = imagesCDN.domainName;
 export const bucketImages = publicImagesBucket.id;
+export const bucketCache = cacheBucket.id;
 
 export const APIHost = customDomain.domainName;
 
@@ -210,5 +211,7 @@ export const historyTokenArn = historyToken.arn;
 export const historyEndpointArn = historyEndpoint.arn;
 export const trainingEndpointArn = trainingEndpoint.arn;
 export const trainingTokenArn = trainingToken.arn;
+
+export const eventRuleName = ruleName;
 
 export const alarmsArn = alarms.map(alarm => alarm.arn);
