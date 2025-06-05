@@ -129,7 +129,7 @@ const cdn = new aws.cloudfront.Distribution("argenpills-images", {
 
 // Cache bucket
 const cache = new aws.s3.Bucket("argenpills-cache", {
-	bucket: "argenpills-cache",
+	bucket: `argenpills-cache-${stack}`,
 	serverSideEncryptionConfiguration: {
 		rule: {
 			applyServerSideEncryptionByDefault: {
