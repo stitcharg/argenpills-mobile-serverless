@@ -1,117 +1,45 @@
 const { Testeablehandler: DashboardHandler } = require('../argenpills-crud/src/dashboard/dashboard');
-
-const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
 const { S3Client } = require("@aws-sdk/client-s3");
-const { mockDashboardColors, mockDashboardAIhistory } = require('./mockData');
 
-require('dotenv').config()
-
-jest.mock('@aws-sdk/client-dynamodb');
 jest.mock("@aws-sdk/client-s3");
 
-const mockedDynamoDb = new DynamoDBClient({ region: process.env.AWS_REGION });
-
-
-describe('Argenpills CRUD (Dashboard tests)', () => {
-	let mockedDynamoDb;
+describe('Dashboard S3 cache tests', () => {
+	let s3Client;
 
 	beforeEach(() => {
-		// Create a new instance for each test
-		mockedDynamoDb = new DynamoDBClient({ region: process.env.AWS_REGION });
-		// Reset the mock
-		DynamoDBClient.prototype.send.mockReset();
+		s3Client = new S3Client({ region: 'us-east-1' });
+		S3Client.prototype.send.mockReset();
 	});
 
-	it('should retrieve dashboard information (colors)', async () => {
+	it('should return cached dashboard data from S3', async () => {
+		const mockCache = {
+			colors: { roja: 2, azul: 1 },
+			dates: [{ date: '2024-06', value: 2 }],
+			ai: [{ date: '01-06-24', value: 3 }]
+		};
+		S3Client.prototype.send.mockResolvedValue({
+			Body: {
+				transformToString: async () => JSON.stringify(mockCache)
+			}
+		});
 
-		DynamoDBClient.prototype.send = jest.fn()
-			.mockResolvedValueOnce(mockDashboardColors)
-			.mockResolvedValueOnce(mockDashboardAIhistory);
-
-		const result = await DashboardHandler(null, null, mockedDynamoDb);
-
-		body = JSON.parse(result.body);
-
-		expect(result.statusCode).toBe(200);
-
-		expect(body.colors.roja).toBe(1);
-	});
-
-	it('should retrieve dashboard information (by date)', async () => {
-
-		DynamoDBClient.prototype.send = jest.fn()
-			.mockResolvedValueOnce(mockDashboardColors)
-			.mockResolvedValueOnce(mockDashboardAIhistory);
-
-		const result = await DashboardHandler(null, null, mockedDynamoDb);
-
-		body = JSON.parse(result.body);
+		const result = await DashboardHandler(null, null, s3Client);
+		const body = JSON.parse(result.body);
 
 		expect(result.statusCode).toBe(200);
-
-		expect(body.dates.length).toBe(2);
-	});
-
-	it('should retrieve ai history information (by date)', async () => {
-
-		DynamoDBClient.prototype.send = jest.fn()
-			.mockResolvedValueOnce(mockDashboardColors)
-			.mockResolvedValueOnce(mockDashboardAIhistory);
-
-		const result = await DashboardHandler(null, null, mockedDynamoDb);;
-
-		body = JSON.parse(result.body);
-
-		expect(result.statusCode).toBe(200);
-
-		expect(body.ai.length).toBe(1);
+		expect(body.colors.roja).toBe(2);
+		expect(body.dates.length).toBe(1);
 		expect(body.ai[0].value).toBe(3);
 	});
 
-	it('should handle pill data retrieval failure', async () => {
-		const dynamoError = {
-			name: 'DynamoDBError',
-			message: 'Error scanning for items: DynamoDB error',
-			$metadata: {
-				httpStatusCode: 500,
-				requestId: 'test-request-id',
-				attempts: 1,
-				totalRetryDelay: 0
-			}
-		};
+	it('should return 500 if S3 read fails', async () => {
+		S3Client.prototype.send.mockRejectedValue(new Error('S3 error!'));
 
-		// Mock the send method to return a Promise
-		mockedDynamoDb.send = jest.fn().mockRejectedValue(dynamoError);
-
-		const result = await DashboardHandler(null, null, mockedDynamoDb);
-
-		const body = JSON.parse(result.data.body);
+		const result = await DashboardHandler(null, null, s3Client);
+		const body = JSON.parse(result.body);
 
 		expect(result.statusCode).toBe(500);
-		expect(body.message).toContain(dynamoError.message);
-	});
-
-	it('should handle AI data retrieval failure', async () => {
-		const dynamoError = {
-			name: 'DynamoDBError',
-			message: 'Error scanning for items: DynamoDB error',
-			$metadata: {
-				httpStatusCode: 500,
-				requestId: 'test-request-id',
-				attempts: 1,
-				totalRetryDelay: 0
-			}
-		};
-
-		// Mock the send method to return a Promise
-		mockedDynamoDb.send = jest.fn()
-			.mockResolvedValueOnce(mockDashboardColors)
-			.mockRejectedValueOnce(dynamoError);
-
-		const result = await DashboardHandler(null, null, mockedDynamoDb);
-		const body = JSON.parse(result.data.body);
-
-		expect(result.statusCode).toBe(500);
-		expect(body.message).toContain(dynamoError.message);
+		expect(body.message).toMatch(/Error reading from cache/);
+		expect(body.error).toMatch(/S3 error/);
 	});
 });
