@@ -30,6 +30,7 @@ import { ruleName } from './eventscheduler';
 // Reading configuration from files
 const config = new pulumi.Config();
 const configAPIHost = config.require("api");
+const snstopicArn = config.require("snstopic-arn");
 const stack = pulumi.getStack();
 
 new aws.iam.RolePolicyAttachment("apiGatewayLoggingPolicyAttachment", {
