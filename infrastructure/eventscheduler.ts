@@ -15,5 +15,12 @@ const ruleTarget = new aws.cloudwatch.EventTarget("argenpills-cache-target-arn",
 	arn: lambdaFnCacheWriter.arn
 });
 
+const lambdaInvokePermission = new aws.lambda.Permission("argenpills-cache-execution-permission", {
+	action: "lambda:InvokeFunction",
+	function: lambdaFnCacheWriter.name,
+	principal: "events.amazonaws.com",
+	sourceArn: dailyMidnightRule.arn,
+});
+
 // Export the rule name
 export const ruleName = dailyMidnightRule.name;
