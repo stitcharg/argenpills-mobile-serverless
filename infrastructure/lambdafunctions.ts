@@ -4,7 +4,7 @@ import * as aws from "@pulumi/aws";
 import { lambdaRole } from './roles';
 import { dynamoTable, dynamoSearchTable } from "./dynamodb";
 import { APuserPool, APuserPoolClient } from "./cognito";
-import { publicImagesBucket } from "./public-images-bucket";
+import { publicImagesBucket, cacheBucket } from "./public-images-bucket";
 
 const config = new pulumi.Config();
 const configImagesDomain = `https://${config.require("images")}`;
@@ -168,11 +168,9 @@ export const lambdaFnDashboard = new aws.lambda.Function(FN_DASHBOARD, {
 		dashboard: new pulumi.asset.FileArchive("../argenpills-crud/src/dashboard"),
 		node_modules: new pulumi.asset.FileArchive("../node_modules")
 	}),
-
 	environment: {
 		variables: {
-			"AP_TABLE": dynamoTable.name,
-			"AP_AIBOT_HISTORY_TABLE": configAIHistoryTableName
+			"BUCKET_CACHE": cacheBucket.id
 		}
 	}
 });
@@ -286,3 +284,53 @@ const lambdaLogGroupAiBotTraning = new aws.cloudwatch.LogGroup(`${FN_AITRAINING}
 	name: logGroupNameAiBotTraining,
 	retentionInDays: 3,
 }, { dependsOn: [lambdaFnAiBotTraining] });
+
+//---------
+const FN_CACHE_WRITER = "argenpills-cache-writer";
+export const lambdaFnCacheWriter = new aws.lambda.Function(FN_CACHE_WRITER, {
+	role: lambdaRole.arn,
+	description: "AP: Lambda function que escribe los resultados del dashboard en el cache",
+	handler: "dashboardcache/dashboardcache.handler",
+	runtime: aws.lambda.Runtime.NodeJS20dX,
+	timeout: 30,
+	code: new pulumi.asset.AssetArchive({
+		dashboardcache: new pulumi.asset.FileArchive("../argenpills-crud/src/dashboardcache"),
+		node_modules: new pulumi.asset.FileArchive("../node_modules")
+	}),
+	environment: {
+		variables: {
+			"BUCKET_CACHE": cacheBucket.id,
+			"AP_TABLE": dynamoTable.name,
+			"AP_AIBOT_HISTORY_TABLE": configAIHistoryTableName
+		}
+	}
+});
+
+// Override the retention days from default CW log
+const logGroupNameCacheWriter = lambdaFnCacheWriter.name.apply(name => `/aws/lambda/${name}`);
+
+const lambdaLogGroupCacheWriter = new aws.cloudwatch.LogGroup(`${FN_CACHE_WRITER}-log-group`, {
+	name: logGroupNameCacheWriter,
+	retentionInDays: 3,
+}, { dependsOn: [lambdaFnCacheWriter] });
+
+// Add S3 write permissions for the cache bucket
+new aws.iam.RolePolicy("cache-writer-s3-policy", {
+	role: lambdaRole.id,
+	policy: pulumi.all([cacheBucket.arn]).apply(([bucketArn]) => JSON.stringify({
+		Version: "2012-10-17",
+		Statement: [{
+			Effect: "Allow",
+			Action: [
+				"s3:PutObject",
+				"s3:GetObject",
+				"s3:DeleteObject",
+				"s3:ListBucket"
+			],
+			Resource: [
+				bucketArn,
+				`${bucketArn}/*`
+			]
+		}]
+	}))
+});
