@@ -2,13 +2,13 @@
   "name": "argenpills-crud-infrastructure",
   "main": "index.ts",
   "devDependencies": {
-    "@types/node": "^22.14.1",
+    "@types/node": "^24.0.1",
     "standart": "^6.1.0"
   },
   "dependencies": {
-    "@pulumi/aws": "^6.77.1",
+    "@pulumi/aws": "^6.82.2",
     "@pulumi/awsx": "^2.21.1",
-    "@pulumi/pulumi": "^3.163.0"
+    "@pulumi/pulumi": "^3.177.0"
   },
   "eslintConfig": {
     "extends": "./node_modules/standard/eslintrc.json"
