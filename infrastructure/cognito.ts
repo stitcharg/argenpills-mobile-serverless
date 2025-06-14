@@ -3,6 +3,15 @@ import * as aws from "@pulumi/aws";
 // Create an AWS Cognito User Pool
 const userPool = new aws.cognito.UserPool("argenpills-userpool", {
     autoVerifiedAttributes: ["email"],
+    schemas: [{
+        attributeDataType: "String",
+        mutable: true,
+        name: "lastLoginDate",
+        stringAttributeConstraints: {
+            maxLength: "256",
+            minLength: "1",
+        },
+    }],
 });
 
 // Create an AWS Cognito User Pool Client
