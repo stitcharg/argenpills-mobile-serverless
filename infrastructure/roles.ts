@@ -24,7 +24,8 @@ new aws.iam.RolePolicy("lambdaCognitoPolicy", {
         Version: "2012-10-17",
         Statement: [{
             Action: [
-                "cognito-idp:AdminInitiateAuth"
+                "cognito-idp:AdminInitiateAuth",
+                "cognito-idp:AdminUpdateUserAttributes"
             ],
             Effect: "Allow",
             Resource: [
