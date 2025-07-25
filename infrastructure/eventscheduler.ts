@@ -1,6 +1,6 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as aws from "@pulumi/aws";
-import { lambdaFnCacheWriter } from "./lambdafunctions";
+import { lambdaFnCacheWriter, lambdaFnPillsCacheWriter } from "./lambdafunctions";
 
 // Create an EventBridge rule that triggers daily at midnight
 const dailyMidnightRule = new aws.cloudwatch.EventRule("argenpills-cache-generation", {
@@ -18,6 +18,18 @@ const ruleTarget = new aws.cloudwatch.EventTarget("argenpills-cache-target-arn",
 const lambdaInvokePermission = new aws.lambda.Permission("argenpills-cache-execution-permission", {
 	action: "lambda:InvokeFunction",
 	function: lambdaFnCacheWriter.name,
+	principal: "events.amazonaws.com",
+	sourceArn: dailyMidnightRule.arn,
+});
+
+const ruleTargetPills = new aws.cloudwatch.EventTarget("argenpills-pills-cache-target-arn", {
+	rule: dailyMidnightRule.name,
+	arn: lambdaFnPillsCacheWriter.arn
+});
+
+const lambdaInvokePermissionPills = new aws.lambda.Permission("argenpills-pills-cache-execution-permission", {
+	action: "lambda:InvokeFunction",
+	function: lambdaFnPillsCacheWriter.name,
 	principal: "events.amazonaws.com",
 	sourceArn: dailyMidnightRule.arn,
 });

@@ -314,6 +314,35 @@ const lambdaLogGroupCacheWriter = new aws.cloudwatch.LogGroup(`${FN_CACHE_WRITER
 	retentionInDays: 3,
 }, { dependsOn: [lambdaFnCacheWriter] });
 
+//---------
+const FN_PILLS_CACHE_WRITER = "argenpills-pills-cache-writer";
+export const lambdaFnPillsCacheWriter = new aws.lambda.Function(FN_PILLS_CACHE_WRITER, {
+	role: lambdaRole.arn,
+	description: "AP: Lambda function que escribe los resultados de las pastillas en el cache",
+	handler: "pillscache/pillscache.handler",
+	runtime: aws.lambda.Runtime.NodeJS20dX,
+	timeout: 30,
+	code: new pulumi.asset.AssetArchive({
+		pillscache: new pulumi.asset.FileArchive("../argenpills-crud/src/pillscache"),
+		node_modules: new pulumi.asset.FileArchive("../node_modules")
+	}),
+	environment: {
+		variables: {
+			"BUCKET_CACHE": cacheBucket.id,
+			"AP_TABLE": dynamoTable.name,
+			"CDN_IMAGES": configImagesDomain,
+		}
+	}
+});
+
+// Override the retention days from default CW log
+const logGroupNamePillsCacheWriter = lambdaFnPillsCacheWriter.name.apply(name => `/aws/lambda/${name}`);
+
+const lambdaLogGroupPillsCacheWriter = new aws.cloudwatch.LogGroup(`${FN_PILLS_CACHE_WRITER}-log-group`, {
+	name: logGroupNamePillsCacheWriter,
+	retentionInDays: 3,
+}, { dependsOn: [lambdaFnCacheWriter] });
+
 // Add S3 write permissions for the cache bucket
 new aws.iam.RolePolicy("cache-writer-s3-policy", {
 	role: lambdaRole.id,

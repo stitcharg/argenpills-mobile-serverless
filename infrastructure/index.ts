@@ -25,6 +25,7 @@ import {
 import { dashboardUrlCRUD } from './cloudwatch-dashboard';
 import { alarms } from './cloudwatch-alerts';
 import { httpApi } from "./httpApi";
+import './eventscheduler';
 import { ruleName } from './eventscheduler';
 
 // Reading configuration from files
