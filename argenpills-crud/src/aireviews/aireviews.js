@@ -35,7 +35,7 @@ exports.Testeablehandler = async (event, context, SSMClient) => {
 			getParameter('/argenpills/prod/aireviews/reviews_token', SSMClient)
 		]);
 
-		console.log(`${API_URL}/list${querystring}`);
+		//console.log(`${API_URL}/list${querystring}`);
 
 		//const response = await fetch(`${API_URL}?pageSize=${pageSize}${lastKey ? `&lastKey=${lastKey}` : ''}`, {
 		const response = await fetch(`${API_URL}/list${querystring}`, {
