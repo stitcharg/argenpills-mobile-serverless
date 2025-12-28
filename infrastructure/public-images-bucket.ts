@@ -24,8 +24,7 @@ if (stack === ENV_DEV) {
 		},
 	});
 } else if (stack === ENV_PROD) {
-	bucket = new aws.s3.Bucket("argenpills-public-images", {
-		arn: "arn:aws:s3:::images.argenpills.info",
+	bucket = aws.s3.Bucket.get("argenpills-public-images", "images.argenpills.info", {
 		bucket: "images.argenpills.info",
 		corsRules: [{
 			allowedHeaders: ["*"],
@@ -36,8 +35,6 @@ if (stack === ENV_DEV) {
 			],
 			allowedOrigins: ["*"],
 		}],
-		hostedZoneId: "Z3AQBSTGFYJSTF",
-		requestPayer: "BucketOwner",
 		serverSideEncryptionConfiguration: {
 			rule: {
 				applyServerSideEncryptionByDefault: {
@@ -50,81 +47,91 @@ if (stack === ENV_DEV) {
 		},
 	}, {
 		protect: true,
+		retainOnDelete: true,
 	});
 } else {
 	console.error("Environment is not DEV or PROD");
 }
 
-// Create an Origin Access Identity
-const originAccessIdentity = new aws.cloudfront.OriginAccessIdentity("argenpills-OAI", {
-	comment: "Origin Access Identity para acceder las imagenes",
+// Create an Origin Access Control (OAC) - newer and more secure than OAI
+// Note: We only create OAC, not the legacy OAI, since we're migrating to OAC
+const originAccessControl = new aws.cloudfront.OriginAccessControl("argenpills-OAC", {
+	originAccessControlOriginType: "s3",
+	signingBehavior: "always",
+	signingProtocol: "sigv4",
+	description: "Origin Access Control para acceder las imagenes",
 });
 
 // Create an S3 bucket policy to allow CloudFront to access the bucket
 const bucketPolicy = new aws.s3.BucketPolicy("policy-bucket-images", {
 	bucket: bucket!.id,
-	policy: pulumi.all([bucket!.arn, originAccessIdentity.iamArn]).apply(([bucketArn, oaiIamArn]) => JSON.stringify({
+	policy: bucket!.arn.apply(bucketArn => JSON.stringify({
 		Version: "2012-10-17",
 		Statement: [
 			{
-				Sid: "PublicReadGetObject",
+				Sid: "AllowCloudFrontServicePrincipal",
 				Effect: "Allow",
 				Principal: {
-					"AWS": oaiIamArn,
+					Service: "cloudfront.amazonaws.com"
 				},
-				Action: [
-					"s3:GetObject"
-				],
-				Resource: [
-					`${bucketArn}/*`
-				]
+				Action: "s3:GetObject",
+				Resource: `${bucketArn}/*`
+			},
+			{
+				Sid: "AllowLegacyOAI",
+				Effect: "Allow",
+				Principal: {
+					AWS: "arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity E3H3PSP24PXR5Q"
+				},
+				Action: "s3:GetObject",
+				Resource: `${bucketArn}/*`
 			}
 		]
 	})),
-}, { dependsOn: [bucket!] });
+}, { dependsOn: [bucket!, originAccessControl] });
 
 // Create a CloudFront distribution
-const cdn = new aws.cloudfront.Distribution("argenpills-images", {
-	comment: "Argenpills Images Bucket CDN",
-	enabled: true,
-	origins: [
-		{
-			domainName: bucket!.bucketRegionalDomainName,
-			originId: bucket!.id,
-			s3OriginConfig: {
-				originAccessIdentity: originAccessIdentity.cloudfrontAccessIdentityPath,
+const cdn = stack === ENV_DEV
+	? new aws.cloudfront.Distribution("argenpills-images", {
+		comment: "Argenpills Images Bucket CDN",
+		enabled: true,
+		origins: [
+			{
+				domainName: bucket!.bucketRegionalDomainName,
+				originId: bucket!.id,
+				originAccessControlId: originAccessControl.id,
+			},
+		],
+		defaultRootObject: "index.html",
+		defaultCacheBehavior: {
+			targetOriginId: bucket!.id,
+			allowedMethods: ["GET", "HEAD"],
+			cachedMethods: ["GET", "HEAD"],
+			forwardedValues: {
+				queryString: false,
+				cookies: {
+					forward: "none",
+				},
+			},
+			viewerProtocolPolicy: "allow-all",
+		},
+		restrictions: {
+			geoRestriction: {
+				restrictionType: "none",
 			},
 		},
-	],
-	defaultRootObject: "index.html",
-	defaultCacheBehavior: {
-		targetOriginId: bucket!.id,
-		allowedMethods: ["GET", "HEAD"],
-		cachedMethods: ["GET", "HEAD"],
-		forwardedValues: {
-			queryString: false,
-			cookies: {
-				forward: "none",
-			},
+		aliases: [
+			configImagesDomain
+		],
+		isIpv6Enabled: true,
+		priceClass: "PriceClass_100",
+		viewerCertificate: {
+			acmCertificateArn: certificate.arn,
+			sslSupportMethod: "sni-only",
+			minimumProtocolVersion: "TLSv1.2_2021"
 		},
-		viewerProtocolPolicy: "allow-all",
-	},
-	restrictions: {
-		geoRestriction: {
-			restrictionType: "none",
-		},
-	},
-	aliases: [
-		configImagesDomain
-	],
-	isIpv6Enabled: true,
-	priceClass: "PriceClass_100",
-	viewerCertificate: {
-		acmCertificateArn: certificate.arn,
-		sslSupportMethod: "sni-only",
-		minimumProtocolVersion: "TLSv1.2_2021"
-	},
-});
+	})
+	: aws.cloudfront.Distribution.get("argenpills-images", "E8L1CGEYQZFCQ", {});
 
 
 // Cache bucket
