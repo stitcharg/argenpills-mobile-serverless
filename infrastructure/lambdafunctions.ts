@@ -272,7 +272,7 @@ export const lambdaFnAiReviews = new aws.lambda.Function(FN_AIREVIEWS, {
 	role: lambdaRole.arn,
 	description: "AP: Ver las reviews enviadas por el bot de Telegram",
 	handler: "aireviews.handler",
-	runtime: aws.lambda.Runtime.NodeJS20dX,
+	runtime: aws.lambda.Runtime.NodeJS22dX,
 	timeout: 10,
 	code: new pulumi.asset.FileArchive("../argenpills-crud/src/aireviews")
 });
