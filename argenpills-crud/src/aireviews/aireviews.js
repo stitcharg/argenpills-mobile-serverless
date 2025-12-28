@@ -35,8 +35,10 @@ exports.Testeablehandler = async (event, context, SSMClient) => {
 			getParameter('/argenpills/prod/aireviews/reviews_token', SSMClient)
 		]);
 
+		console.log(`${API_URL}/list${querystring}`);
+
 		//const response = await fetch(`${API_URL}?pageSize=${pageSize}${lastKey ? `&lastKey=${lastKey}` : ''}`, {
-		const response = await fetch(`${API_URL}${querystring}`, {
+		const response = await fetch(`${API_URL}/list${querystring}`, {
 			headers: {
 				'x-api-secret-token': `${API_TOKEN}`
 			}
@@ -54,7 +56,7 @@ exports.Testeablehandler = async (event, context, SSMClient) => {
 			headers,
 			statusCode: 200,
 			body: JSON.stringify({
-				data: data.history || [],
+				data: data || [],
 				//LastEvaluatedKey: data.lastKey || null
 			})
 		};
