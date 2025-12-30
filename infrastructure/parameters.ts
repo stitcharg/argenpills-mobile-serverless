@@ -36,6 +36,27 @@ export const trainingToken = new aws.ssm.Parameter("aibotTrainingToken", {
 	ignoreChanges: ["value"]
 });
 
+//REVIEWS
+export const reviewsEndpoint = new aws.ssm.Parameter("aibotReviewsEndpoint", {
+	name: "/argenpills/prod/aireviews/reviews_endpoint",
+	type: "SecureString",
+	value: "https://your-api-endpoint.com",
+	description: "Endpoint URL de la API de las reviews",
+}, {
+	ignoreChanges: ["value"]
+});
+
+export const reviewsToken = new aws.ssm.Parameter("aibotReviewsToken", {
+	name: "/argenpills/prod/aireviews/reviews_token",
+	type: "SecureString",
+	value: "your-secret-token",
+	description: "Authentication token de la API de las reviews",
+}, {
+	ignoreChanges: ["value"]
+});
+
+
+
 //ALGOLIA
 export const algoliaApplicationId = new aws.ssm.Parameter("algoliaApplicationId", {
 	name: "/argenpills/prod/algolia/application_id",
