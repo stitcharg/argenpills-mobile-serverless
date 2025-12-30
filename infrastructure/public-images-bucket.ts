@@ -62,34 +62,6 @@ const originAccessControl = new aws.cloudfront.OriginAccessControl("argenpills-O
 	description: "Origin Access Control para acceder las imagenes",
 });
 
-// Create an S3 bucket policy to allow CloudFront to access the bucket
-const bucketPolicy = new aws.s3.BucketPolicy("policy-bucket-images", {
-	bucket: bucket!.id,
-	policy: bucket!.arn.apply(bucketArn => JSON.stringify({
-		Version: "2012-10-17",
-		Statement: [
-			{
-				Sid: "AllowCloudFrontServicePrincipal",
-				Effect: "Allow",
-				Principal: {
-					Service: "cloudfront.amazonaws.com"
-				},
-				Action: "s3:GetObject",
-				Resource: `${bucketArn}/*`
-			},
-			{
-				Sid: "AllowLegacyOAI",
-				Effect: "Allow",
-				Principal: {
-					AWS: "arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity E3H3PSP24PXR5Q"
-				},
-				Action: "s3:GetObject",
-				Resource: `${bucketArn}/*`
-			}
-		]
-	})),
-}, { dependsOn: [bucket!, originAccessControl] });
-
 // Create a CloudFront distribution
 const cdn = stack === ENV_DEV
 	? new aws.cloudfront.Distribution("argenpills-images", {
@@ -102,9 +74,9 @@ const cdn = stack === ENV_DEV
 				originAccessControlId: originAccessControl.id,
 			},
 		],
-		defaultRootObject: "index.html",
 		defaultCacheBehavior: {
 			targetOriginId: bucket!.id,
+			viewerProtocolPolicy: "redirect-to-https",
 			allowedMethods: ["GET", "HEAD"],
 			cachedMethods: ["GET", "HEAD"],
 			forwardedValues: {
@@ -113,7 +85,6 @@ const cdn = stack === ENV_DEV
 					forward: "none",
 				},
 			},
-			viewerProtocolPolicy: "allow-all",
 		},
 		restrictions: {
 			geoRestriction: {
@@ -132,6 +103,50 @@ const cdn = stack === ENV_DEV
 		},
 	})
 	: aws.cloudfront.Distribution.get("argenpills-images", "E8L1CGEYQZFCQ", {});
+
+// Create an S3 bucket policy to allow CloudFront to access the bucket
+// For DEV: Uses OAC (Origin Access Control) - modern approach
+// For PROD: Uses legacy OAI (Origin Access Identity) - needs manual migration
+const bucketPolicy = new aws.s3.BucketPolicy("policy-bucket-images", {
+	bucket: bucket!.id,
+	policy: pulumi.all([bucket!.arn, cdn.arn]).apply(([bucketArn, distributionArn]) => {
+		const statements: any[] = [
+			{
+				Sid: "AllowCloudFrontServicePrincipal",
+				Effect: "Allow",
+				Principal: {
+					Service: "cloudfront.amazonaws.com"
+				},
+				Action: "s3:GetObject",
+				Resource: `${bucketArn}/*`,
+				Condition: {
+					StringEquals: {
+						"AWS:SourceArn": distributionArn
+					}
+				}
+			}
+		];
+
+		// For PROD: Also allow legacy OAI (Origin Access Identity) since distribution uses it
+		// Note: The OAI ARN format uses "cloudfront" as a special account identifier (not a real account ID)
+		if (stack === ENV_PROD) {
+			statements.push({
+				Sid: "AllowLegacyOAI",
+				Effect: "Allow",
+				Principal: {
+					AWS: "arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity E3H3PSP24PXR5Q"
+				},
+				Action: "s3:GetObject",
+				Resource: `${bucketArn}/*`
+			});
+		}
+
+		return JSON.stringify({
+			Version: "2012-10-17",
+			Statement: statements
+		});
+	}),
+}, { dependsOn: [bucket!, originAccessControl, cdn] });
 
 
 // Cache bucket
