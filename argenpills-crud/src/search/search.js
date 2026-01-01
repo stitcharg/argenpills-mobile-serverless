@@ -48,24 +48,26 @@ exports.Testeablehandler = async (event, context, ssmClient) => {
 
 				// Initialize Algolia client
 				const client = algoliasearch(applicationId, searchKey);
-				const index = client.initIndex(indexName);
 
 				// Perform search - always return up to 20 results
-				const { hits, nbHits } = await index.search(search, {
-					hitsPerPage: 20
+				// In v5, we search directly on the client with a requests array
+				const { results } = await client.search({
+					requests: [
+						{
+							indexName: indexName,
+							query: search,
+							hitsPerPage: 20
+						}
+					]
 				});
+
+				const { hits, nbHits } = results[0];
 
 				//set the total items
 				headers["X-Total-Count"] = nbHits;
 
 				//Prefix the items URL with the CDN, just to make it simpler to display
 				body = hits.map(row => {
-					if (row.image)
-						row.image = CDN_IMAGES + row.image;
-
-					if (row.lab_image)
-						row.lab_image = CDN_IMAGES + row.lab_image;
-
 					return row;
 				});
 

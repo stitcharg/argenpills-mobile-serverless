@@ -29,13 +29,15 @@ jest.mock("@aws-sdk/client-ssm");
 
 // Mock algoliasearch - return a jest.fn() that can be configured
 jest.mock('algoliasearch', () => {
-	return jest.fn();
+	return {
+		algoliasearch: jest.fn()
+	};
 }, { virtual: true });
 
 const mockedDynamoDb = new DynamoDBClient({ region: process.env.AWS_REGION });
 const mockedS3 = new S3Client({});
 const mockedSSM = new SSMClient({ region: process.env.AWS_REGION });
-const algoliasearch = require('algoliasearch');
+const { algoliasearch } = require('algoliasearch');
 
 const CDN_IMAGES = process.env.CDN_IMAGES;
 
@@ -114,12 +116,12 @@ describe('Argenpills CRUD', () => {
 			},
 		};
 
+
 		// Mock Algolia client - set this up first
-		const mockIndex = {
-			search: jest.fn().mockResolvedValue(mockAlgoliaSearchResponse)
-		};
 		const mockClient = {
-			initIndex: jest.fn().mockReturnValue(mockIndex)
+			search: jest.fn().mockResolvedValue({
+				results: [mockAlgoliaSearchResponse]
+			})
 		};
 		// Configure the mock to return the client when called
 		algoliasearch.mockReturnValue(mockClient);
@@ -156,7 +158,13 @@ describe('Argenpills CRUD', () => {
 		expect(body.data).toBeDefined();
 		expect(body.data.length).toBe(1);
 		expect(algoliasearch).toHaveBeenCalledWith('test-app-id', 'test-search-key');
-		expect(mockIndex.search).toHaveBeenCalledWith('amarillo', { hitsPerPage: 20 });
+		expect(mockClient.search).toHaveBeenCalledWith({
+			requests: [{
+				indexName: 'test-index',
+				query: 'amarillo',
+				hitsPerPage: 20
+			}]
+		});
 	});
 
 	it('should return http status 403 when searching without parameters', async () => {
