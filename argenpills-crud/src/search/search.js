@@ -1,13 +1,22 @@
-const { DynamoDBClient, GetItemCommand, QueryCommand } = require("@aws-sdk/client-dynamodb");
-const { unmarshall } = require('@aws-sdk/util-dynamodb');
+const { SSMClient, GetParameterCommand } = require("@aws-sdk/client-ssm");
+const { algoliasearch } = require('algoliasearch');
 
-exports.Testeablehandler = async (event, context, client) => {
+const PAGESIZE = 9;
+
+async function getParameter(paramName, ssmClient) {
+	const command = new GetParameterCommand({
+		Name: paramName,
+		WithDecryption: true
+	});
+
+	const response = await ssmClient.send(command);
+	return response.Parameter.Value;
+}
+
+exports.Testeablehandler = async (event, context, ssmClient) => {
 	let body;
 	let statusCode = 200;
-	let totalItems = 0; //will store the x-total-count for the /items
-
-	const pageSize = parseInt(event.queryStringParameters?.pageSize) || 10;
-	const lastKey = event.queryStringParameters?.lastKey;
+	let totalItems = 0;
 
 	const headers = {
 		"Content-Type": "application/json; charset=utf-8",
@@ -16,7 +25,6 @@ exports.Testeablehandler = async (event, context, client) => {
 
 	//This is the URL where the images are hosted. In this case is a CF distribution
 	const CDN_IMAGES = process.env.CDN_IMAGES;
-	const AP_TABLE = process.env.AP_TABLE;
 
 	const queryParams = event.queryStringParameters;
 
@@ -32,90 +40,57 @@ exports.Testeablehandler = async (event, context, client) => {
 			body = "Missing parameter";
 		}
 		else {
+			try {
+				// Get Algolia credentials from Parameter Store
+				const [applicationId, searchKey, indexName] = await Promise.all([
+					getParameter('/argenpills/prod/algolia/application_id', ssmClient),
+					getParameter('/argenpills/prod/algolia/search_key', ssmClient),
+					getParameter('/argenpills/prod/algolia/index_name', ssmClient)
+				]);
 
-			const params = {
-				TableName: AP_TABLE,
-				IndexName: "word-index",
-				KeyConditionExpression: "word = :c",
-				ExpressionAttributeValues: {
-					":c": { S: search.toLowerCase() }
-				},
-				Limit: pageSize,
-				ScanIndexForward: false
-			};
+				const client = algoliasearch(applicationId, searchKey);
 
-			// Add the ExclusiveStartKey using lastKey for pagination
-			if (lastKey) {
-				try {
-					const command = new GetItemCommand({
-						TableName: AP_TABLE,
-						Key: {
-							id: { S: lastKey }
+				const { results } = await client.search({
+					requests: [
+						{
+							indexName: indexName,
+							query: search,
+							hitsPerPage: PAGESIZE
 						}
-					});
-					const results = await client.send(command);
+					]
+				});
 
-					var pillData = unmarshall(results.Item);
+				//nbHits has the real amount but we don't support paging for now
+				//const { hits, nbHits } = results[0];
+				const { hits } = results[0];
+				const nbHits = hits.length;
 
-					params.ExclusiveStartKey = {
-						"posted_date": {
-							"S": pillData.posted_date
-						},
-						"id": {
-							"S": lastKey
-						},
-						"published": {
-							"S": pillData.published
-						}
-					};
+				//set the total items
+				headers["X-Total-Count"] = nbHits;
 
-				} catch (err) {
-					console.log("ERROR GETTING LASTSHOWNKEY", err);
+				body = hits.map(row => {
+					return row;
+				});
 
-					return {
-						headers,
-						statusCode: 500,
-						body: JSON.stringify({
-							message: err
-						})
-					};
-				}
+				return {
+					headers,
+					statusCode: 200,
+					body: JSON.stringify({
+						data: body
+					})
+				};
+
+			} catch (err) {
+				console.log("ERROR SEARCHING", err);
+
+				return {
+					headers,
+					statusCode: 500,
+					body: JSON.stringify({
+						message: err.message || err
+					})
+				};
 			}
-
-			const command = new QueryCommand(params)
-
-			//TODO: revisar la paginacion, porque creo que con el nuevo indice no anda bien. Pero por ahora zafa
-			const { Items, Count, LastEvaluatedKey } = await client.send(command);
-
-			const searchResults = Items.map(unmarshall);
-
-			results = searchResults.map(item => {
-				//Deserialize the JSON and return it
-				return JSON.parse(item.record);
-			});
-
-			//set the total items
-			headers["X-Total-Count"] = Count;
-
-			//Prefix the items URL with the CDN, just to make it simpler to display
-			body = results.map(row => {
-				if (row.image)
-					row.image = CDN_IMAGES + row.image;
-
-				if (row.lab_image)
-					row.lab_image = CDN_IMAGES + row.lab_image;
-
-				return row;
-			});
-
-			return {
-				headers,
-				statusCode: 200,
-				body: JSON.stringify({
-					data: body,
-					LastEvaluatedKey: (Count === 0 ? null : LastEvaluatedKey)
-				})
-			};
 		}
 	}
 
@@ -127,6 +102,6 @@ exports.Testeablehandler = async (event, context, client) => {
 };
 
 exports.handler = async (event, context) => {
-	const client = new DynamoDBClient({ region: process.env.AWS_REGION });
-	return exports.Testeablehandler(event, context, client);
+	const ssmClient = new SSMClient({ region: process.env.AWS_REGION || 'us-east-1' });
+	return exports.Testeablehandler(event, context, ssmClient);
 };

@@ -2,7 +2,7 @@
     "version": "2.0",
     "routeKey": "GET /search",
     "rawPath": "/dev/search",
-    "rawQueryString": "s=amarilla&pageSize=9",
+    "rawQueryString": "s=gato&pageSize=9",
     "headers": {
         "accept": "application/json, text/plain, */*",
         "accept-encoding": "gzip, deflate, br",
@@ -22,7 +22,7 @@
     },
     "queryStringParameters": {
         "pageSize": "9",
-        "s": "amarilla"
+        "s": "gato"
     },
     "requestContext": {
         "accountId": "274370362803",

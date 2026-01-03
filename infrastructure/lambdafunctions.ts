@@ -137,12 +137,14 @@ const FN_SEARCH = "argenpills-crud-search";
 export const lambdaFnSearch = new aws.lambda.Function(FN_SEARCH, {
 	role: lambdaRole.arn,
 	description: "AP CRUD: Buscar por palabra clave",
-	handler: "search.handler",
+	handler: "search/search.handler",
 	runtime: aws.lambda.Runtime.NodeJS22dX,
-	code: new pulumi.asset.FileArchive("../argenpills-crud/src/search"),
+	code: new pulumi.asset.AssetArchive({
+		search: new pulumi.asset.FileArchive("../argenpills-crud/src/search"),
+		node_modules: new pulumi.asset.FileArchive("../node_modules")
+	}),
 	environment: {
 		variables: {
-			"AP_TABLE": dynamoSearchTable.name,
 			"CDN_IMAGES": configImagesDomain
 		}
 	}

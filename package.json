@@ -4,6 +4,7 @@
     "@aws-sdk/client-s3": "^3.717.0",
     "@aws-sdk/client-ssm": "^3.750.0",
     "@aws-sdk/util-dynamodb": "^3.716.0",
+    "algoliasearch": "^5.20.0",
     "aws-sdk": "^2.1692.0",
     "busboy": "^1.6.0",
     "date-fns": "^4.1.0",

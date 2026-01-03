@@ -797,6 +797,32 @@ const mockSearchTableSample = {
 	]
 }
 
+// Mock Algolia search response
+const mockAlgoliaSearchResponse = {
+	hits: [
+		{
+			"published": "x",
+			"ap_url": "https://argenpills.org/showthread.php?tid=5931",
+			"image": "/pills/2669162.jpg",
+			"posted_date": "2021-12-08",
+			"id": "49cf7362-84a9-4213-bc73-114edc1cb888",
+			"name": "Bitcoin",
+			"color": "Amarilla",
+			"substance": 1,
+			"load": 1,
+			"warning": 1,
+			"notes": "Línea divisoria atrás. Al parecer hay dos tandas. La que tiene Marquis hecho no pareciera poseer MDMA."
+		}
+	],
+	nbHits: 1,
+	page: 0,
+	nbPages: 1,
+	hitsPerPage: 20,
+	processingTimeMS: 1,
+	query: "amarillo",
+	params: "query=amarillo&hitsPerPage=20"
+}
+
 const mockDashboardAIhistory = {
 	"$metadata": {
 		"httpStatusCode": 200,
@@ -834,5 +860,6 @@ module.exports = {
 	mockTableDescription,
 	mockSingleItemResponseSpecialChars,
 	mockSearchTableSample,
-	mockDashboardAIhistory
+	mockDashboardAIhistory,
+	mockAlgoliaSearchResponse
 }
