@@ -162,7 +162,7 @@ describe('Argenpills CRUD', () => {
 			requests: [{
 				indexName: 'test-index',
 				query: 'amarillo',
-				hitsPerPage: 20
+				hitsPerPage: 9
 			}]
 		});
 	});
