@@ -1,6 +1,8 @@
 const { SSMClient, GetParameterCommand } = require("@aws-sdk/client-ssm");
 const { algoliasearch } = require('algoliasearch');
 
+const PAGESIZE = 9;
+
 async function getParameter(paramName, ssmClient) {
 	const command = new GetParameterCommand({
 		Name: paramName,
@@ -53,12 +55,15 @@ exports.Testeablehandler = async (event, context, ssmClient) => {
 						{
 							indexName: indexName,
 							query: search,
-							hitsPerPage: 9
+							hitsPerPage: PAGESIZE
 						}
 					]
 				});
 
-				const { hits, nbHits } = results[0];
+				//nbHits has the real amount but we don't support paging for now
+				//const { hits, nbHits } = results[0];
+				const { hits } = results[0];
+				const nbHits = hits.length;
 
 				//set the total items
 				headers["X-Total-Count"] = nbHits;
