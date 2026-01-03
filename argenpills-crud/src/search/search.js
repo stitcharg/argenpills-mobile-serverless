@@ -46,17 +46,14 @@ exports.Testeablehandler = async (event, context, ssmClient) => {
 					getParameter('/argenpills/prod/algolia/index_name', ssmClient)
 				]);
 
-				// Initialize Algolia client
 				const client = algoliasearch(applicationId, searchKey);
 
-				// Perform search - always return up to 20 results
-				// In v5, we search directly on the client with a requests array
 				const { results } = await client.search({
 					requests: [
 						{
 							indexName: indexName,
 							query: search,
-							hitsPerPage: 20
+							hitsPerPage: 9
 						}
 					]
 				});
@@ -66,7 +63,6 @@ exports.Testeablehandler = async (event, context, ssmClient) => {
 				//set the total items
 				headers["X-Total-Count"] = nbHits;
 
-				//Prefix the items URL with the CDN, just to make it simpler to display
 				body = hits.map(row => {
 					return row;
 				});
