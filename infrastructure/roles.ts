@@ -88,6 +88,24 @@ new aws.iam.RolePolicy("lambdaParameterStoreReviewsPolicy", {
     }
 });
 
+// Add policy to allow reading Algolia parameters from Parameter Store
+new aws.iam.RolePolicy("lambdaParameterStoreAlgoliaPolicy", {
+    role: lambdaRole.id,
+    policy: {
+        Version: "2012-10-17",
+        Statement: [{
+            Effect: "Allow",
+            Action: [
+                "ssm:GetParameter",
+                "ssm:GetParameters"
+            ],
+            Resource: [
+                "arn:aws:ssm:*:*:parameter/argenpills/prod/algolia/*"
+            ]
+        }]
+    }
+});
+
 // Create IAM Role and Policy to allow API Gateway to write to CloudWatch Logs
 export const apiGatewayLoggingRole = new aws.iam.Role("apiGatewayLoggingRole", {
     assumeRolePolicy: JSON.stringify({
