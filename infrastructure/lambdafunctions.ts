@@ -2,7 +2,7 @@ import * as pulumi from "@pulumi/pulumi";
 import * as aws from "@pulumi/aws";
 
 import { lambdaRole } from './roles';
-import { dynamoTable, dynamoSearchTable } from "./dynamodb";
+import { dynamoTable, dynamoSearchTable, dynamoFactTable } from "./dynamodb";
 import { APuserPool, APuserPoolClient } from "./cognito";
 import { publicImagesBucket, cacheBucket } from "./public-images-bucket";
 
@@ -364,6 +364,111 @@ const lambdaLogGroupPillsCacheWriter = new aws.cloudwatch.LogGroup(`${FN_PILLS_C
 	name: logGroupNamePillsCacheWriter,
 	retentionInDays: 3,
 }, { dependsOn: [lambdaFnCacheWriter] });
+
+//---------
+const FN_LIST_FACTS = "argenpills-crud-listfacts";
+export const lambdaFnListFacts = new aws.lambda.Function(FN_LIST_FACTS, {
+	role: lambdaRole.arn,
+	description: "AP CRUD: Listar todos los facts",
+	handler: "listfacts.handler",
+	runtime: aws.lambda.Runtime.NodeJS22dX,
+	code: new pulumi.asset.FileArchive("../argenpills-crud/src/facts"),
+	environment: {
+		variables: {
+			"TABLE_NAME": dynamoFactTable.name
+		}
+	}
+});
+
+const logGroupNameListFacts = lambdaFnListFacts.name.apply(name => `/aws/lambda/${name}`);
+const lambdaLogGroupListFacts = new aws.cloudwatch.LogGroup(`${FN_LIST_FACTS}-log-group`, {
+	name: logGroupNameListFacts,
+	retentionInDays: 3,
+}, { dependsOn: [lambdaFnListFacts] });
+
+//---------
+const FN_GET_FACT = "argenpills-crud-getfact";
+export const lambdaFnGetFact = new aws.lambda.Function(FN_GET_FACT, {
+	role: lambdaRole.arn,
+	description: "AP CRUD: Obtener un fact por ID",
+	handler: "getfact.handler",
+	runtime: aws.lambda.Runtime.NodeJS22dX,
+	code: new pulumi.asset.FileArchive("../argenpills-crud/src/facts"),
+	environment: {
+		variables: {
+			"TABLE_NAME": dynamoFactTable.name
+		}
+	}
+});
+
+const logGroupNameGetFact = lambdaFnGetFact.name.apply(name => `/aws/lambda/${name}`);
+const lambdaLogGroupGetFact = new aws.cloudwatch.LogGroup(`${FN_GET_FACT}-log-group`, {
+	name: logGroupNameGetFact,
+	retentionInDays: 3,
+}, { dependsOn: [lambdaFnGetFact] });
+
+//---------
+const FN_ADD_FACT = "argenpills-crud-addfact";
+export const lambdaFnAddFact = new aws.lambda.Function(FN_ADD_FACT, {
+	role: lambdaRole.arn,
+	description: "AP CRUD: Agregar un nuevo fact",
+	handler: "addfact.handler",
+	runtime: aws.lambda.Runtime.NodeJS22dX,
+	code: new pulumi.asset.FileArchive("../argenpills-crud/src/facts"),
+	environment: {
+		variables: {
+			"TABLE_NAME": dynamoFactTable.name
+		}
+	}
+});
+
+const logGroupNameAddFact = lambdaFnAddFact.name.apply(name => `/aws/lambda/${name}`);
+const lambdaLogGroupAddFact = new aws.cloudwatch.LogGroup(`${FN_ADD_FACT}-log-group`, {
+	name: logGroupNameAddFact,
+	retentionInDays: 3,
+}, { dependsOn: [lambdaFnAddFact] });
+
+//---------
+const FN_EDIT_FACT = "argenpills-crud-editfact";
+export const lambdaFnEditFact = new aws.lambda.Function(FN_EDIT_FACT, {
+	role: lambdaRole.arn,
+	description: "AP CRUD: Editar un fact existente",
+	handler: "editfact.handler",
+	runtime: aws.lambda.Runtime.NodeJS22dX,
+	code: new pulumi.asset.FileArchive("../argenpills-crud/src/facts"),
+	environment: {
+		variables: {
+			"TABLE_NAME": dynamoFactTable.name
+		}
+	}
+});
+
+const logGroupNameEditFact = lambdaFnEditFact.name.apply(name => `/aws/lambda/${name}`);
+const lambdaLogGroupEditFact = new aws.cloudwatch.LogGroup(`${FN_EDIT_FACT}-log-group`, {
+	name: logGroupNameEditFact,
+	retentionInDays: 3,
+}, { dependsOn: [lambdaFnEditFact] });
+
+//---------
+const FN_DELETE_FACT = "argenpills-crud-deletefact";
+export const lambdaFnDeleteFact = new aws.lambda.Function(FN_DELETE_FACT, {
+	role: lambdaRole.arn,
+	description: "AP CRUD: Eliminar un fact",
+	handler: "deletefact.handler",
+	runtime: aws.lambda.Runtime.NodeJS22dX,
+	code: new pulumi.asset.FileArchive("../argenpills-crud/src/facts"),
+	environment: {
+		variables: {
+			"TABLE_NAME": dynamoFactTable.name
+		}
+	}
+});
+
+const logGroupNameDeleteFact = lambdaFnDeleteFact.name.apply(name => `/aws/lambda/${name}`);
+const lambdaLogGroupDeleteFact = new aws.cloudwatch.LogGroup(`${FN_DELETE_FACT}-log-group`, {
+	name: logGroupNameDeleteFact,
+	retentionInDays: 3,
+}, { dependsOn: [lambdaFnDeleteFact] });
 
 // Add S3 write permissions for the cache bucket
 new aws.iam.RolePolicy("cache-writer-s3-policy", {
