@@ -7,6 +7,7 @@ const { Testeablehandler: DeleteItemHandler } = require('../argenpills-crud/src/
 
 const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
 const { S3Client } = require("@aws-sdk/client-s3");
+const { SSMClient } = require("@aws-sdk/client-ssm");
 const { mockSearchResults,
 	mockGetItemsResponse,
 	mockSingleItemResponse,
@@ -17,21 +18,34 @@ const { mockSearchResults,
 	mockPagedData,
 	mockTableDescription,
 	mockSingleItemResponseSpecialChars,
-	mockSearchTableSample } = require('./mockData');
+	mockSearchTableSample,
+	mockAlgoliaSearchResponse } = require('./mockData');
 
 require('dotenv').config()
 
 jest.mock('@aws-sdk/client-dynamodb');
 jest.mock("@aws-sdk/client-s3");
+jest.mock("@aws-sdk/client-ssm");
+
+// Mock algoliasearch - return a jest.fn() that can be configured
+jest.mock('algoliasearch', () => {
+	return {
+		algoliasearch: jest.fn()
+	};
+}, { virtual: true });
 
 const mockedDynamoDb = new DynamoDBClient({ region: process.env.AWS_REGION });
 const mockedS3 = new S3Client({});
+const mockedSSM = new SSMClient({ region: process.env.AWS_REGION });
+const { algoliasearch } = require('algoliasearch');
 
 const CDN_IMAGES = process.env.CDN_IMAGES;
 
 describe('Argenpills CRUD', () => {
 	beforeEach(() => {
 		DynamoDBClient.prototype.send.mockReset();
+		SSMClient.prototype.send.mockReset();
+		algoliasearch.mockReset();
 	});
 
 	it('should retrieve data successfully', async () => {
@@ -102,35 +116,62 @@ describe('Argenpills CRUD', () => {
 			},
 		};
 
-		//replace the id of the existing mocking data
-		const lastItem = mockSingleItemResponse;
-		lastItem.Item.id = { S: "7a6a496e-a916-4e32-92bb-df5eb64e02db" };
-		lastItem.Item.posted_date = { S: '2023-01-16' }
 
-		mockPagedData.Count = 1;
+		// Mock Algolia client - set this up first
+		const mockClient = {
+			search: jest.fn().mockResolvedValue({
+				results: [mockAlgoliaSearchResponse]
+			})
+		};
+		// Configure the mock to return the client when called
+		algoliasearch.mockReturnValue(mockClient);
 
-		DynamoDBClient.prototype.send = jest.fn().mockImplementation((command) => {
-			if (command.constructor.name === 'GetItemCommand') {
-				return Promise.resolve(lastItem);
-			}
-			if (command.constructor.name === 'QueryCommand') {
-				return Promise.resolve(mockSearchTableSample);
+		// Mock SSM Parameter Store responses
+		SSMClient.prototype.send = jest.fn().mockImplementation((command) => {
+			if (command.constructor.name === 'GetParameterCommand') {
+				const paramName = command.input.Name;
+				if (paramName === '/argenpills/prod/algolia/application_id') {
+					return Promise.resolve({
+						Parameter: { Value: 'test-app-id' }
+					});
+				}
+				if (paramName === '/argenpills/prod/algolia/search_key') {
+					return Promise.resolve({
+						Parameter: { Value: 'test-search-key' }
+					});
+				}
+				if (paramName === '/argenpills/prod/algolia/index_name') {
+					return Promise.resolve({
+						Parameter: { Value: 'test-index' }
+					});
+				}
 			}
 			return Promise.reject(new Error("Unrecognized command"));
 		});
 
-		const result = await SearchItemsHandler(event, null, mockedDynamoDb);
+		const result = await SearchItemsHandler(event, null, mockedSSM);
 
+
+		expect(result.statusCode).toBe(200);
 		expect(result.headers["X-Total-Count"]).toBe(1);
+		const body = JSON.parse(result.body);
+		expect(body.data).toBeDefined();
+		expect(body.data.length).toBe(1);
+		expect(algoliasearch).toHaveBeenCalledWith('test-app-id', 'test-search-key');
+		expect(mockClient.search).toHaveBeenCalledWith({
+			requests: [{
+				indexName: 'test-index',
+				query: 'amarillo',
+				hitsPerPage: 9
+			}]
+		});
 	});
 
 	it('should return http status 403 when searching without parameters', async () => {
 
 		const event = {};
 
-		DynamoDBClient.prototype.send = jest.fn().mockResolvedValue(mockSearchResults);
-
-		const result = await SearchItemsHandler(event, null, mockedDynamoDb);
+		const result = await SearchItemsHandler(event, null, mockedSSM);
 
 		expect(result.statusCode).toBe(403);
 	});
@@ -142,9 +183,7 @@ describe('Argenpills CRUD', () => {
 			},
 		};
 
-		DynamoDBClient.prototype.send = jest.fn().mockResolvedValue(mockSearchResults);
-
-		const result = await SearchItemsHandler(event, null, mockedDynamoDb);
+		const result = await SearchItemsHandler(event, null, mockedSSM);
 
 		expect(result.statusCode).toBe(403);
 	});

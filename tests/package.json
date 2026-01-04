@@ -13,6 +13,7 @@
     "@aws-sdk/lib-dynamodb": "^3.789.0",
     "@aws-sdk/lib-storage": "^3.787.0",
     "@types/jest": "^29.5.14",
+    "algoliasearch": "^5.20.0",
     "aws-sdk": "^2.1692.0",
     "busboy": "^1.6.0",
     "dotenv": "^16.5.0"
