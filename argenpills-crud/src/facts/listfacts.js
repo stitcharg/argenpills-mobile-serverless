@@ -1,31 +1,17 @@
 const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
-const { DynamoDBDocumentClient, PutCommand } = require("@aws-sdk/lib-dynamodb");
-const { randomUUID } = require('crypto');
+const { DynamoDBDocumentClient, ScanCommand } = require("@aws-sdk/lib-dynamodb");
 
 exports.Testeablehandler = async (event, context, dynamoDBClient) => {
-	const id = randomUUID(); // generate guid
-
 	try {
 		const docClient = DynamoDBDocumentClient.from(dynamoDBClient);
 
-		// Parse the request body
-		const body = JSON.parse(event.body);
-
-		// Create the item with the required structure
-		const item = {
-			Id: id,
-			text: body.text,
-			used: body.used !== undefined ? body.used : 0 // Default to 0 if not provided
-		};
-
-		// Create the params for DynamoDB
+		// Create the params for DynamoDB scan
 		const params = {
-			TableName: process.env.TABLE_NAME,
-			Item: item
+			TableName: process.env.TABLE_NAME
 		};
 
-		// Put the item in DynamoDB
-		await docClient.send(new PutCommand(params));
+		// Scan the table to get all items
+		const data = await docClient.send(new ScanCommand(params));
 
 		// Return success response
 		return {
@@ -33,13 +19,10 @@ exports.Testeablehandler = async (event, context, dynamoDBClient) => {
 			headers: {
 				"Content-Type": "application/json"
 			},
-			body: JSON.stringify({
-				message: "Item added successfully",
-				item: item
-			})
+			body: JSON.stringify(data.Items)
 		};
 	} catch (error) {
-		console.error("Error adding item:", error);
+		console.error("Error listing facts:", error);
 
 		// Return error response
 		return {
@@ -48,7 +31,7 @@ exports.Testeablehandler = async (event, context, dynamoDBClient) => {
 				"Content-Type": "application/json"
 			},
 			body: JSON.stringify({
-				message: "Failed to add item",
+				message: "Failed to list facts",
 				error: error.message
 			})
 		};

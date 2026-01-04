@@ -21,7 +21,12 @@ import {
 	lambdaFnAdd,
 	lambdaFnAiBotHistory,
 	lambdaFnAiBotTraining,
-	lambdaFnAiReviews
+	lambdaFnAiReviews,
+	lambdaFnListFacts,
+	lambdaFnGetFact,
+	lambdaFnAddFact,
+	lambdaFnEditFact,
+	lambdaFnDeleteFact
 } from './lambdafunctions';
 import { dashboardUrlCRUD } from './cloudwatch-dashboard';
 import { alarms } from './cloudwatch-alerts';
@@ -62,7 +67,13 @@ const routes = [
 	{ path: "/trainingdata/{id}", method: "GET", lambda: lambdaFnAiBotTraining, name: "GetOneAiTrainingData", authenticate: true },
 	{ path: "/trainingdata", method: "POST", lambda: lambdaFnAiBotTraining, name: "PostAiTrainingData", authenticate: true },
 	{ path: "/trainingdata/{id}", method: "PUT", lambda: lambdaFnAiBotTraining, name: "PutAiTrainingData", authenticate: true },
-	{ path: "/trainingdata/{id}", method: "DELETE", lambda: lambdaFnAiBotTraining, name: "DeleteAiTrainingData", authenticate: true }
+	{ path: "/trainingdata/{id}", method: "DELETE", lambda: lambdaFnAiBotTraining, name: "DeleteAiTrainingData", authenticate: true },
+	// Facts
+	{ path: "/facts", method: "GET", lambda: lambdaFnListFacts, name: "ListFacts", authenticate: true },
+	{ path: "/facts/{id}", method: "GET", lambda: lambdaFnGetFact, name: "GetFact", authenticate: true },
+	{ path: "/facts", method: "POST", lambda: lambdaFnAddFact, name: "AddFact", authenticate: true },
+	{ path: "/facts/{id}", method: "PUT", lambda: lambdaFnEditFact, name: "EditFact", authenticate: true },
+	{ path: "/facts/{id}", method: "DELETE", lambda: lambdaFnDeleteFact, name: "DeleteFact", authenticate: true }
 ]
 
 const customAuthorizer = new aws.apigatewayv2.Authorizer("CognitoAuhorizer", {

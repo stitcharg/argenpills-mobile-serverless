@@ -41,3 +41,12 @@ lambda-local -l trainingdata.js -h handler -e ../../../tests/lambda-local/delete
 ```
 lambda-local -l dashboard.js -h handler -e ../../../tests/lambda-local/dashboard.json -E '{"AP_TABLE": "argenpills-pills-8c4b3e0", "AP_AIBOT_HISTORY_TABLE": "telegram-bot-history"}'
 ```
+
+### Facts
+```
+lambda-local -l listfacts.js -h handler -e ../../../tests/lambda-local/fact-get-list.json -E '{"TABLE_NAME": "AP-FactTable-df55711", "AWS_REGION": "us-east-1"}'
+lambda-local -l getfact.js -h handler -e ../../../tests/lambda-local/fact-get-item.json -E '{"TABLE_NAME": "AP-FactTable-df55711", "AWS_REGION": "us-east-1"}'
+lambda-local -l deletefact.js -h handler -e ../../../tests/lambda-local/fact-delete.json -E '{"TABLE_NAME": "AP-FactTable-df55711", "AWS_REGION": "us-east-1"}'
+lambda-local -l addfact.js -h handler -e ../../../tests/lambda-local/fact-add.json -E '{"TABLE_NAME": "AP-FactTable-df55711", "AWS_REGION": "us-east-1"}'
+lambda-local -l editfact.js -h handler -e ../../../tests/lambda-local/fact-update.json -E '{"TABLE_NAME": "AP-FactTable-df55711", "AWS_REGION": "us-east-1"}'
+```

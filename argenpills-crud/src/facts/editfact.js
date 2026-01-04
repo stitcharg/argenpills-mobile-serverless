@@ -38,16 +38,16 @@ exports.Testeablehandler = async (event, context, dynamoDBClient) => {
 		const expressionAttributeValues = {};
 		const expressionAttributeNames = {};
 
-		if (body.Text !== undefined) {
+		if (body.text !== undefined) {
 			updateExpression += "#text = :text, ";
-			expressionAttributeValues[":text"] = body.Text;
-			expressionAttributeNames["#text"] = "Text";
+			expressionAttributeValues[":text"] = body.text;
+			expressionAttributeNames["#text"] = "text";
 		}
 
-		if (body.Used !== undefined) {
+		if (body.used !== undefined) {
 			updateExpression += "#used = :used, ";
-			expressionAttributeValues[":used"] = body.Used;
-			expressionAttributeNames["#used"] = "Used";
+			expressionAttributeValues[":used"] = body.used;
+			expressionAttributeNames["#used"] = "used";
 		}
 
 		// Remove trailing comma and space

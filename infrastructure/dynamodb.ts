@@ -9,6 +9,7 @@ const stack = pulumi.getStack();
 let dynamoTable: aws.dynamodb.Table;
 let dynamoReferenceTable: aws.dynamodb.Table;
 let dynamoSearchTable: aws.dynamodb.Table;
+let dynamoFactTable: aws.dynamodb.Table;
 
 const config = new pulumi.Config();
 const configDynamoDbAIHistory = config.require("dynamodb-ai-history-arn");	//Esto lo maneja otro stack
@@ -40,6 +41,10 @@ if (stack === ENV_DEV) {
 		{
 			replaceOnChanges: ["attributes"]
 		});
+
+	// Fact Table DEV
+	dynamoFactTable = aws.dynamodb.Table.get("argenpills-facts", "AP-FactTable-df55711");
+
 } else {
 	dynamoTable = new aws.dynamodb.Table("argenpills-pills", {
 		attributes: [
@@ -82,6 +87,9 @@ if (stack === ENV_DEV) {
 	}, {
 		protect: true,
 	});
+
+	// Fact Table PROD
+	dynamoFactTable = aws.dynamodb.Table.get("argenpills-facts", "AP-FactTable-df44884");
 }
 
 // Create a DynamoDB table
@@ -127,9 +135,10 @@ new aws.iam.RolePolicy("lambdaDynamoPolicy", {
 			dynamoTable.arn,
 			dynamoReferenceTable.arn,
 			dynamoSearchTable.arn,
+			dynamoFactTable.arn,
 			configDynamoDbAIHistory
 		]
-	).apply(([pillTableArn, pillTelegramReferenceTable, pillSearchTable, aiHistoryBotTable]) => JSON.stringify({
+	).apply(([pillTableArn, pillTelegramReferenceTable, pillSearchTable, pillFactTable, aiHistoryBotTable]) => JSON.stringify({
 		Version: "2012-10-17",
 		Statement: [{
 			Action: [
@@ -149,6 +158,8 @@ new aws.iam.RolePolicy("lambdaDynamoPolicy", {
 				`${pillTelegramReferenceTable}/index/*`,
 				pillSearchTable,
 				`${pillSearchTable}/index/*`,
+				pillFactTable,
+				`${pillFactTable}/index/*`,
 				aiHistoryBotTable,
 				`${aiHistoryBotTable}/index/*`
 			],
@@ -156,4 +167,4 @@ new aws.iam.RolePolicy("lambdaDynamoPolicy", {
 	})),
 });
 
-export { dynamoTable, dynamoReferenceTable, dynamoSearchTable }
+export { dynamoTable, dynamoReferenceTable, dynamoSearchTable, dynamoFactTable }

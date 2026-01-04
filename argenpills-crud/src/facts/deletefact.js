@@ -1,31 +1,35 @@
 const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
-const { DynamoDBDocumentClient, PutCommand } = require("@aws-sdk/lib-dynamodb");
-const { randomUUID } = require('crypto');
+const { DynamoDBDocumentClient, DeleteCommand } = require("@aws-sdk/lib-dynamodb");
 
 exports.Testeablehandler = async (event, context, dynamoDBClient) => {
-	const id = randomUUID(); // generate guid
-
 	try {
 		const docClient = DynamoDBDocumentClient.from(dynamoDBClient);
 
-		// Parse the request body
-		const body = JSON.parse(event.body);
+		// Get the ID from path parameters
+		const id = event.pathParameters && event.pathParameters.id;
 
-		// Create the item with the required structure
-		const item = {
-			Id: id,
-			text: body.text,
-			used: body.used !== undefined ? body.used : 0 // Default to 0 if not provided
-		};
+		if (!id) {
+			return {
+				statusCode: 400,
+				headers: {
+					"Content-Type": "application/json"
+				},
+				body: JSON.stringify({
+					message: "Missing 'id' in path parameters"
+				})
+			};
+		}
 
-		// Create the params for DynamoDB
+		// Create the params for DynamoDB delete
 		const params = {
 			TableName: process.env.TABLE_NAME,
-			Item: item
+			Key: {
+				Id: id
+			}
 		};
 
-		// Put the item in DynamoDB
-		await docClient.send(new PutCommand(params));
+		// Delete the item from DynamoDB
+		await docClient.send(new DeleteCommand(params));
 
 		// Return success response
 		return {
@@ -34,12 +38,11 @@ exports.Testeablehandler = async (event, context, dynamoDBClient) => {
 				"Content-Type": "application/json"
 			},
 			body: JSON.stringify({
-				message: "Item added successfully",
-				item: item
+				message: "Fact deleted successfully"
 			})
 		};
 	} catch (error) {
-		console.error("Error adding item:", error);
+		console.error("Error deleting fact:", error);
 
 		// Return error response
 		return {
@@ -48,7 +51,7 @@ exports.Testeablehandler = async (event, context, dynamoDBClient) => {
 				"Content-Type": "application/json"
 			},
 			body: JSON.stringify({
-				message: "Failed to add item",
+				message: "Failed to delete fact",
 				error: error.message
 			})
 		};
