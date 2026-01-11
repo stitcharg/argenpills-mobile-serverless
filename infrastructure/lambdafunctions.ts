@@ -289,6 +289,25 @@ const lambdaLogGroupAiReviews = new aws.cloudwatch.LogGroup(`${FN_AIREVIEWS}-log
 
 
 //---------
+const FN_POSTAIREVIEWS = "argenpills-post-aireviews";
+export const lambdaFnPostAiReviews = new aws.lambda.Function(FN_POSTAIREVIEWS, {
+	role: lambdaRole.arn,
+	description: "AP: Postea la review al foro",
+	handler: "postforum.handler",
+	runtime: aws.lambda.Runtime.NodeJS22dX,
+	timeout: 10,
+	code: new pulumi.asset.FileArchive("../argenpills-crud/src/aireviews")
+});
+
+// Override the retention days from default CW log
+const logGroupNamePostAiReviews = lambdaFnPostAiReviews.name.apply(name => `/aws/lambda/${name}`);
+
+const lambdaLogGroupPostAiReviews = new aws.cloudwatch.LogGroup(`${FN_POSTAIREVIEWS}-log-group`, {
+	name: logGroupNamePostAiReviews,
+	retentionInDays: 3,
+}, { dependsOn: [lambdaFnPostAiReviews] });
+
+//---------
 const FN_AITRAINING = "argenpills-aibot-training";
 export const lambdaFnAiBotTraining = new aws.lambda.Function(FN_AITRAINING, {
 	role: lambdaRole.arn,

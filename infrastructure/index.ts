@@ -26,7 +26,8 @@ import {
 	lambdaFnGetFact,
 	lambdaFnAddFact,
 	lambdaFnEditFact,
-	lambdaFnDeleteFact
+	lambdaFnDeleteFact,
+	lambdaFnPostAiReviews
 } from './lambdafunctions';
 import { dashboardUrlCRUD } from './cloudwatch-dashboard';
 import { alarms } from './cloudwatch-alerts';
@@ -61,8 +62,10 @@ const routes = [
 	{ path: "/dashboard", method: "GET", lambda: lambdaFnDashboard, name: "Dashboard", authenticate: false },
 	{ path: "/items/{id}", method: "PUT", lambda: lambdaFnEdit, name: "EditItem", authenticate: true },
 	{ path: "/items", method: "POST", lambda: lambdaFnAdd, name: "AddItem", authenticate: true },
+	// Telegram
 	{ path: "/aibothistory", method: "GET", lambda: lambdaFnAiBotHistory, name: "GetAiBotHistory", authenticate: true },
 	{ path: "/aireviews", method: "GET", lambda: lambdaFnAiReviews, name: "GetAiReviews", authenticate: true },
+	{ path: "/aireviews/postforum", method: "POST", lambda: lambdaFnPostAiReviews, name: "PostAiReviews", authenticate: true },
 	{ path: "/trainingdata", method: "GET", lambda: lambdaFnAiBotTraining, name: "GetAiTrainingData", authenticate: true },
 	{ path: "/trainingdata/{id}", method: "GET", lambda: lambdaFnAiBotTraining, name: "GetOneAiTrainingData", authenticate: true },
 	{ path: "/trainingdata", method: "POST", lambda: lambdaFnAiBotTraining, name: "PostAiTrainingData", authenticate: true },
