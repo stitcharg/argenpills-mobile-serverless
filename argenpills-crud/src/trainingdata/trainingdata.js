@@ -58,7 +58,7 @@ exports.Testeablehandler = async (event, context, SSMClient) => {
 						headers,
 						statusCode: 200,
 						body: JSON.stringify({
-							data: data.training_data || [],
+							data: data.trainingData || [],
 							//LastEvaluatedKey: data.lastKey || null
 						})
 					};
@@ -84,7 +84,7 @@ exports.Testeablehandler = async (event, context, SSMClient) => {
 						headers,
 						statusCode: 200,
 						body: JSON.stringify({
-							data: data.training_data || [],
+							data: data.trainingData || [],
 						})
 					};
 				}
@@ -119,7 +119,7 @@ exports.Testeablehandler = async (event, context, SSMClient) => {
 					headers,
 					statusCode: 200,
 					body: JSON.stringify({
-						data: data.training_data || []
+						data: data.trainingData || []
 					})
 				};
 			}
@@ -155,7 +155,7 @@ exports.Testeablehandler = async (event, context, SSMClient) => {
 					headers,
 					statusCode: 200,
 					body: JSON.stringify({
-						data: data.training_data || []
+						data: data.trainingData || []
 					})
 				};
 			}
