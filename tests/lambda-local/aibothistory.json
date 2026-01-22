@@ -21,7 +21,9 @@
         "x-forwarded-proto": "https",
         "x-api-secret-token": "123"
     },
-    "queryStringParameters": {},
+    "queryStringParameters": {
+        "date": "2025-12-31"
+    },
     "requestContext": {
         "accountId": "274370362803",
         "apiId": "jzoxfb2jxe",
